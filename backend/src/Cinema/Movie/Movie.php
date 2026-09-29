@@ -2,8 +2,17 @@
 
 namespace App\Cinema\Movie;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+    ]
+)]
 #[ORM\Entity]
 #[ORM\Table(name: 'movie')]
 class Movie

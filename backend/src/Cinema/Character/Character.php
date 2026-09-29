@@ -2,11 +2,23 @@
 
 namespace App\Cinema\Character;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Cinema\Movie\Movie;
 use App\Cinema\Person\Person;
 use App\Cinema\Series\Series;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+    ]
+)]
+#[ApiFilter(SearchFilter::class, properties: ['actor' => 'exact', 'movie' => 'exact', 'series' => 'exact'])]
 #[ORM\Entity]
 #[ORM\Table(name: 'character')]
 class Character
