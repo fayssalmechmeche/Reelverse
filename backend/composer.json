@@ -9,12 +9,17 @@
         "ext-iconv": "*",
         "api-platform/core": "*",
         "doctrine/doctrine-bundle": "*",
+        "doctrine/doctrine-migrations-bundle": "^4.0",
+        "symfony/asset": "7.1.*",
         "symfony/console": "7.1.*",
         "symfony/dotenv": "7.1.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.1.*",
+        "symfony/http-client": "7.1.*",
         "symfony/messenger": "7.1.*",
         "symfony/runtime": "7.1.*",
+        "symfony/twig-bundle": "7.1.*",
+        "symfony/validator": "7.1.*",
         "symfony/yaml": "7.1.*"
     },
     "config": {
@@ -67,6 +72,7 @@
         }
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3"
+        "doctrine/doctrine-fixtures-bundle": "^4.3",
+        "symfony/maker-bundle": "^1.67"
     }
 }
