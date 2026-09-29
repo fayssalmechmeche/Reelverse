@@ -5,24 +5,8 @@ namespace App\Card;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use App\Card\CardType;
 use Doctrine\ORM\Mapping as ORM;
-
-enum CardType: string
-{
-    case PERSON = 'person';
-    case MOVIE = 'movie';
-    case SERIES = 'series';
-    case CHARACTER = 'character';
-}
-
-enum Rarity: string
-{
-    case COMMON = 'common';
-    case UNCOMMON = 'uncommon';
-    case RARE = 'rare';
-    case EPIC = 'epic';
-    case LEGENDARY = 'legendary';
-}
 
 #[ApiResource(
     operations: [
