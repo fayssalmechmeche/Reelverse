@@ -3,3 +3,6 @@ controllers:
         path: ../src/
         namespace: App
     type: attribute
+api_login:
+    path: /api/login
+    methods: [POST]
