@@ -3,6 +3,7 @@
 namespace App\Pack;
 
 use Doctrine\ORM\Mapping as ORM;
+use App\User\User;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'pack_stock')]
@@ -18,6 +19,10 @@ class PackStock
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $lastComputedAt;
+
+    #[ORM\OneToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false, unique: true)]
+    private User $user;
 
     public function __construct()
     {
@@ -72,6 +77,16 @@ class PackStock
             throw new \DomainException('Aucun pack disponible.');
         }
         $this->storedPacks--;
+        return $this;
+    }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+    public function setUser(User $user): static
+    {
+        $this->user = $user;
         return $this;
     }
 }
