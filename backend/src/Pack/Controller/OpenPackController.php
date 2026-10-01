@@ -4,7 +4,9 @@ namespace App\Pack\Controller;
 
 use App\Pack\PackOpener;
 use App\Pack\PackStock;
+use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,16 +17,23 @@ class OpenPackController
     public function __construct(
         private EntityManagerInterface $em,
         private PackOpener $opener,
+        private Security $security,
     ) {}
 
     #[Route('/api/packs/open', name: 'api_packs_open', methods: ['POST'])]
     public function __invoke(): JsonResponse
     {
-        // Temporaire : un seul PackStock global, tant qu'il n'y a pas d'auth/user
-        $stock = $this->em->getRepository(PackStock::class)->findOneBy([]) ?? new PackStock();
+        /** @var User|null $user */
+        $user = $this->security->getUser();
 
-        if (!$stock->getId()) {
-            $this->em->persist($stock);
+        if (!$user) {
+            return new JsonResponse(['error' => 'Authentification requise.'], 401);
+        }
+
+        $stock = $this->em->getRepository(PackStock::class)->findOneBy(['user' => $user]);
+
+        if (!$stock) {
+            return new JsonResponse(['error' => 'Aucun stock de packs trouvé pour cet utilisateur.'], 404);
         }
 
         $stock->sync(new \DateTimeImmutable());
