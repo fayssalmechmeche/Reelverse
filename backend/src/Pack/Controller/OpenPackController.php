@@ -5,6 +5,7 @@ namespace App\Pack\Controller;
 use App\Pack\PackOpener;
 use App\Pack\PackStock;
 use App\User\User;
+use App\Inventory\InventoryManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class OpenPackController
         private EntityManagerInterface $em,
         private PackOpener $opener,
         private Security $security,
+        private InventoryManager $inventory,
     ) {}
 
     #[Route('/api/packs/open', name: 'api_packs_open', methods: ['POST'])]
@@ -40,6 +42,9 @@ class OpenPackController
 
         try {
             $cards = $this->opener->open($stock);
+            foreach ($cards as $card) {
+                $this->inventory->addCard($user, $card);
+            }
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
