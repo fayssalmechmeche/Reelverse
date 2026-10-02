@@ -28,6 +28,9 @@ class ShopService
         }
 
         $wallet = $this->em->getRepository(Wallet::class)->findOneBy(['user' => $user]);
+        if (!$wallet) {
+            throw new \DomainException('Wallet introuvable pour l\'utilisateur.');
+        }
         $wallet->debit($shopCard->getPrice());
 
         $shopCard->markAsSold();
@@ -51,6 +54,9 @@ class ShopService
         }
 
         $wallet = $this->em->getRepository(Wallet::class)->findOneBy(['user' => $user]);
+        if (!$wallet) {
+            throw new \DomainException('Wallet introuvable pour l\'utilisateur.');
+        }
         $wallet->debit($this->pricing->refreshCost());
 
         // L'ancienne disparaît (marquée vendue + refreshed, donc plus jamais refreshable)
