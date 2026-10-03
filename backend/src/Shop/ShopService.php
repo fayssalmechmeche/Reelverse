@@ -2,12 +2,13 @@
 
 namespace App\Shop;
 
-use App\Card\Card;
+use App\Card\RandomCardDrawer;
 use App\Economy\Wallet\Wallet;
 use App\Inventory\InventoryManager;
 use App\Pack\PackDrawConfig;
 use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Achievement\AchievementChecker;
 
 class ShopService
 {
@@ -16,7 +17,8 @@ class ShopService
         private InventoryManager $inventory,
         private ShopPricing $pricing,
         private PackDrawConfig $drawConfig,
-        private ShopGenerator $shopGenerator,
+        private RandomCardDrawer $drawer,
+        private AchievementChecker $achievementChecker,
     ) {}
 
     public function buy(User $user, int $shopCardId): ShopCard
@@ -35,6 +37,7 @@ class ShopService
 
         $shopCard->markAsSold();
         $this->inventory->addCard($user, $shopCard->getCard());
+        $this->achievementChecker->onCardsObtained($user, [$shopCard->getCard()->getRarity()]);
 
         $this->em->flush();
 
@@ -59,24 +62,21 @@ class ShopService
         }
         $wallet->debit($this->pricing->refreshCost());
 
-        // L'ancienne disparaît (marquée vendue + refreshed, donc plus jamais refreshable)
         $oldShopCard->markAsSold();
         $oldShopCard->markAsRefreshed();
 
-        // Une nouvelle carte est générée à la même place, même rareté tirée au hasard,
-        // le prix des autres cartes du shop ne change pas (seul le prix du refresh est payé)
         $rarity = $this->drawConfig->drawRarity();
         $existingIds = array_map(
             fn($sc) => $sc->getCard()->getId(),
             $oldShopCard->getShop()->getShopCards()->toArray()
         );
-        $newCard = $this->shopGenerator->pickRandomCard($rarity, $existingIds);
+        $newCard = $this->drawer->pickRandomCard($rarity, $existingIds);
 
         if ($newCard !== null) {
             $newShopCard = new ShopCard();
             $newShopCard->setCard($newCard);
             $newShopCard->setPrice($this->pricing->priceFor($rarity));
-            $newShopCard->markAsRefreshed(); // la nouvelle ne peut plus être re-refreshed non plus aujourd'hui
+            $newShopCard->markAsRefreshed();
             $oldShopCard->getShop()->addShopCard($newShopCard);
             $this->em->persist($newShopCard);
         }

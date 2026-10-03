@@ -11,6 +11,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Achievement\AchievementChecker;
 
 #[AsController]
 class OpenPackController
@@ -20,6 +21,7 @@ class OpenPackController
         private PackOpener $opener,
         private Security $security,
         private InventoryManager $inventory,
+        private AchievementChecker $achievementChecker,
     ) {}
 
     #[Route('/api/packs/open', name: 'api_packs_open', methods: ['POST'])]
@@ -48,7 +50,8 @@ class OpenPackController
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
-
+        $rarities = array_map(fn($c) => $c->getRarity(), $cards);
+        $this->achievementChecker->onCardsObtained($user, $rarities);
         $this->em->flush();
 
         return new JsonResponse([

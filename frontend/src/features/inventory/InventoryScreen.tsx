@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CinemaCard } from "../../components/CinemaCard";
-import { resolveCard } from "../cards/resolveCard";
-import type { RarityKey } from "../../design/rarity";
+import { useInventory, useSellCard, type InventoryCard } from "./useInventory";
+import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
+import {
+  useWishlist,
+  useAddToWishlist,
+  useRemoveFromWishlist,
+} from "../wishlist/useWishlist";
+import {
+  useSaleList,
+  useAddToSaleList,
+  useRemoveFromSaleList,
+} from "../wishlist/useSaleList";
 
-interface UserCardData {
-  id: number;
-  cardId: number;
-  type: "person" | "movie" | "series" | "character";
-  entityId: number;
-  rarity: RarityKey;
-  quantity: number;
-}
+const TYPE_META: Record<
+  InventoryCard["type"],
+  { emoji: string; label: string }
+> = {
+  person: { emoji: "👤", label: "Acteur" },
+  movie: { emoji: "🎬", label: "Film" },
+  series: { emoji: "📺", label: "Série" },
+  character: { emoji: "🎭", label: "Personnage" },
+};
 
-interface ResolvedUserCard extends UserCardData {
+interface ResolvedUserCard extends InventoryCard {
   name: string;
   subtitle: string;
   imageUrl: string | null;
@@ -21,41 +32,82 @@ interface ResolvedUserCard extends UserCardData {
   typeLabel: string;
 }
 
-async function fetchInventory(): Promise<UserCardData[]> {
-  const res = await fetch("/api/inventory", { credentials: "include" });
-  return res.json();
-}
-
 export function InventoryScreen() {
-  const [cards, setCards] = useState<ResolvedUserCard[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { data: inventory = [], isLoading } = useInventory();
+  const sellCard = useSellCard();
+
+  const { data: wishlist = [] } = useWishlist();
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+  const wishlistedCardIds = useMemo(
+    () => new Set(wishlist.map((w) => w.cardId)),
+    [wishlist],
+  );
+
+  const { data: saleList = [] } = useSaleList();
+  const addToSaleList = useAddToSaleList();
+  const removeFromSaleList = useRemoveFromSaleList();
+  const saleListCardIds = useMemo(
+    () => new Set(saleList.map((s) => s.cardId)),
+    [saleList],
+  );
+
   const [sellTarget, setSellTarget] = useState<ResolvedUserCard | null>(null);
   const [sellAmount, setSellAmount] = useState(1);
   const [actionError, setActionError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
-  async function load() {
-    setLoading(true);
-    const data = await fetchInventory();
-    const owned = data.filter((c) => c.quantity > 0);
-    const resolved = await Promise.all(
-      owned.map(async (c) => {
-        const info = await resolveCard(c);
-        return { ...c, ...info };
+  const owned = useMemo(
+    () => inventory.filter((c) => c.quantity > 0),
+    [inventory],
+  );
+  const resolvedResults = useResolvedCards(
+    owned.map(
+      (c): CardRef => ({
+        type: c.type,
+        entityId: c.entityId,
+        rarity: c.rarity,
       }),
-    );
-    setCards(resolved);
-    setLoading(false);
-  }
+    ),
+  );
 
-  useEffect(() => {
-    load();
-  }, []);
+  const cards: ResolvedUserCard[] = useMemo(
+    () =>
+      owned.map((c, idx) => {
+        const info = resolvedResults[idx]?.data;
+        const meta = TYPE_META[c.type];
+        return {
+          ...c,
+          name: info?.name ?? `${c.type} #${c.entityId}`,
+          subtitle: info?.subtitle ?? "",
+          imageUrl: info?.imageUrl ?? null,
+          typeEmoji: info?.typeEmoji ?? meta.emoji,
+          typeLabel: meta.label,
+        };
+      }),
+    [owned, resolvedResults],
+  );
 
   function goToDetail(card: ResolvedUserCard) {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
+  }
+
+  function toggleWishlist(cardId: number) {
+    if (wishlistedCardIds.has(cardId)) {
+      removeFromWishlist.mutate(cardId);
+    } else {
+      addToWishlist.mutate(cardId);
+    }
+  }
+
+  function toggleSaleList(cardId: number) {
+    if (saleListCardIds.has(cardId)) {
+      removeFromSaleList.mutate(cardId);
+    } else {
+      addToSaleList.mutate(cardId);
+    }
   }
 
   function openSellModal(card: ResolvedUserCard) {
@@ -64,28 +116,19 @@ export function InventoryScreen() {
     setSellTarget(card);
   }
 
-  async function confirmSell() {
+  function confirmSell() {
     if (!sellTarget) return;
     setActionError(null);
-
-    const res = await fetch(`/api/inventory/${sellTarget.id}/sell`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quantity: sellAmount }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json();
-      setActionError(body.error ?? "Erreur lors de la vente.");
-      return;
-    }
-
-    setSellTarget(null);
-    await load();
+    sellCard.mutate(
+      { id: sellTarget.id, quantity: sellAmount },
+      {
+        onSuccess: () => setSellTarget(null),
+        onError: (err: Error) => setActionError(err.message),
+      },
+    );
   }
 
-  if (loading)
+  if (isLoading)
     return <p className="text-[#9CA3AF]">Chargement de l'inventaire...</p>;
 
   return (
@@ -105,6 +148,10 @@ export function InventoryScreen() {
               quantity={card.quantity}
               onClick={() => goToDetail(card)}
               compact={true}
+              isWishlisted={wishlistedCardIds.has(card.cardId)}
+              onToggleWishlist={() => toggleWishlist(card.cardId)}
+              isInSaleList={saleListCardIds.has(card.cardId)}
+              onToggleSaleList={() => toggleSaleList(card.cardId)}
             />
             <button
               onClick={() => openSellModal(card)}
@@ -180,7 +227,8 @@ export function InventoryScreen() {
               </button>
               <button
                 onClick={confirmSell}
-                className="px-4 py-2 rounded-xl bg-[#E50914] text-white text-xs font-black uppercase"
+                disabled={sellCard.isPending}
+                className="px-4 py-2 rounded-xl bg-[#E50914] text-white text-xs font-black uppercase disabled:opacity-50"
               >
                 Vendre
               </button>

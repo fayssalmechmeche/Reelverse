@@ -2,6 +2,7 @@
 
 namespace App\Inventory;
 
+use App\Achievement\CardAcquisitionLog;
 use App\Card\Card;
 use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,6 +24,12 @@ class InventoryManager
 
         $userCard->addQuantity($quantity);
         $this->em->persist($userCard);
+
+        $log = new CardAcquisitionLog();
+        $log->setUser($user);
+        $log->setCard($card);
+        $log->setQuantity($quantity);
+        $this->em->persist($log);
 
         return $userCard;
     }

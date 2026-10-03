@@ -11,6 +11,9 @@ import { PersonDetail } from "./features/people/PersonDetail";
 import { ShopScreen } from "./features/shop/ShopScreen";
 import { Link } from "react-router-dom";
 import { InventoryScreen } from "./features/inventory/InventoryScreen";
+import { MarketplaceScreen } from "./features/marketplace/MarketplaceScreen";
+import { FriendsScreen } from "./features/social/FriendsScreen";
+import { TradingScreen } from "./features/trading/TradingScreen";
 
 function App() {
   const { isAuthenticated, isLoading, logout } = useAuth();
@@ -42,10 +45,25 @@ function App() {
                   >
                     Ma collection →
                   </Link>
-                  <h2>Films</h2>
-                  <MovieList />
-                  <h2>Séries</h2>
-                  <SeriesList />
+                  <Link
+                    to="/marketplace"
+                    className="text-[#E50914] text-sm font-bold"
+                  >
+                    Marketplace →
+                  </Link>
+                  <Link
+                    to="/friends"
+                    className="text-[#E50914] text-sm font-bold"
+                  >
+                    Amis →
+                  </Link>
+                  <Link
+                    to="/trading"
+                    className="text-[#E50914] text-sm font-bold"
+                  >
+                    Échanges →
+                  </Link>
+
                   <Link
                     to="/inventory"
                     className="text-[#E50914] text-sm font-bold"
@@ -60,6 +78,9 @@ function App() {
             <Route path="/series/:id" element={<SeriesDetail />} />
             <Route path="/shop" element={<ShopScreen />} />
             <Route path="/inventory" element={<InventoryScreen />} />
+            <Route path="/marketplace" element={<MarketplaceScreen />} />
+            <Route path="/friends" element={<FriendsScreen />} />
+            <Route path="/trading" element={<TradingScreen />} />
           </>
         ) : (
           <Route path="*" element={<LoginPage />} />

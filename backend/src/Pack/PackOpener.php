@@ -3,7 +3,7 @@
 namespace App\Pack;
 
 use App\Card\Card;
-use App\Card\Rarity;
+use App\Card\RandomCardDrawer;
 use Doctrine\ORM\EntityManagerInterface;
 
 class PackOpener
@@ -11,6 +11,7 @@ class PackOpener
     public function __construct(
         private EntityManagerInterface $em,
         private PackDrawConfig $config,
+        private RandomCardDrawer $drawer,
     ) {}
 
     /**
@@ -26,10 +27,10 @@ class PackOpener
 
         while (count($drawn) < PackDrawConfig::CARDS_PER_PACK) {
             $rarity = $this->config->drawRarity();
-            $card = $this->pickRandomCard($rarity, $usedIds);
+            $card = $this->drawer->pickRandomCard($rarity, $usedIds);
 
             if ($card === null) {
-                continue; // aucune carte dispo pour cette rareté, on retire une autre rareté
+                continue;
             }
 
             $drawn[] = $card;
@@ -39,31 +40,5 @@ class PackOpener
         $this->em->flush();
 
         return $drawn;
-    }
-
-    private function pickRandomCard(Rarity $rarity, array $excludeIds): ?Card
-    {
-        $qb = $this->em->getRepository(Card::class)->createQueryBuilder('c')
-            ->where('c.rarity = :rarity')
-            ->setParameter('rarity', $rarity);
-
-        if (!empty($excludeIds)) {
-            $qb->andWhere('c.id NOT IN (:excluded)')
-                ->setParameter('excluded', $excludeIds);
-        }
-
-        // Tirage aléatoire côté base : on compte, on prend un offset random
-        $count = (clone $qb)->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
-
-        if ($count === 0) {
-            return null;
-        }
-
-        $randomOffset = random_int(0, $count - 1);
-
-        return $qb->setFirstResult($randomOffset)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
     }
 }
