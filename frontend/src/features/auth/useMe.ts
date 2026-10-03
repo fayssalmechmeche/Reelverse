@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 export interface Me {
   id: number;
   username: string;
+  coins: number;
 }
 
 export function useMe() {

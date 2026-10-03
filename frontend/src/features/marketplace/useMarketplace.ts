@@ -72,7 +72,10 @@ export function useBuyListing() {
       }
       return res.json();
     },
-    onSuccess: () => invalidateAfterTrade(qc),
+    onSuccess: () => {
+      invalidateAfterTrade(qc);
+      qc.invalidateQueries({ queryKey: ["me"] });
+    },
   });
 }
 

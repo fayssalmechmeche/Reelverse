@@ -62,9 +62,6 @@ class ShopService
         }
         $wallet->debit($this->pricing->refreshCost());
 
-        $oldShopCard->markAsSold();
-        $oldShopCard->markAsRefreshed();
-
         $rarity = $this->drawConfig->drawRarity();
         $existingIds = array_map(
             fn($sc) => $sc->getCard()->getId(),
@@ -72,18 +69,19 @@ class ShopService
         );
         $newCard = $this->drawer->pickRandomCard($rarity, $existingIds);
 
-        if ($newCard !== null) {
-            $newShopCard = new ShopCard();
-            $newShopCard->setCard($newCard);
-            $newShopCard->setPrice($this->pricing->priceFor($rarity));
-            $newShopCard->markAsRefreshed();
-            $oldShopCard->getShop()->addShopCard($newShopCard);
-            $this->em->persist($newShopCard);
+        if ($newCard === null) {
+            throw new \DomainException('Aucune carte disponible pour le refresh.');
         }
+
+        // On remplace la carte en place (même ligne), au lieu d'en ajouter une nouvelle :
+        // le document précise que la carte refresh "disparaît" et une nouvelle apparaît "à sa place".
+        $oldShopCard->setCard($newCard);
+        $oldShopCard->setPrice($this->pricing->priceFor($rarity));
+        $oldShopCard->markAsRefreshed();
 
         $this->em->flush();
 
-        return $newShopCard ?? $oldShopCard;
+        return $oldShopCard;
     }
 
     private function getOwnedShopCard(User $user, int $shopCardId): ShopCard

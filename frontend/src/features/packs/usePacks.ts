@@ -1,5 +1,23 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RarityKey } from "../../design/rarity";
+
+export interface PackStockData {
+  storedPacks: number;
+  maxStock: number;
+  secondsToNextPack: number;
+}
+
+export function usePackStock() {
+  return useQuery({
+    queryKey: ["packStock"],
+    queryFn: async (): Promise<PackStockData> => {
+      const res = await fetch("/api/packs/stock", { credentials: "include" });
+      return res.json();
+    },
+    staleTime: 5_000,
+    refetchInterval: 30_000,
+  });
+}
 
 export interface DrawnCard {
   id: number;
@@ -27,6 +45,7 @@ export function useOpenPack() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["packStock"] });
     },
   });
 }

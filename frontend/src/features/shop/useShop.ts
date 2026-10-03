@@ -27,6 +27,7 @@ export function useShop() {
 function invalidateShop(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["shop"] });
   qc.invalidateQueries({ queryKey: ["inventory"] });
+  qc.invalidateQueries({ queryKey: ["me"] });
 }
 
 export function useBuyShopCard() {
