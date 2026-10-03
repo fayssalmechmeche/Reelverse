@@ -1,0 +1,12 @@
+api_platform:
+    title: Reelverse API
+    mapping:
+        paths:
+            - '%kernel.project_dir%/src'
+    formats:
+        jsonld: ['application/ld+json']
+        json: ['application/json']
+        html: ['text/html']
+    docs_formats:
+        jsonld: ['application/ld+json']
+        html: ['text/html']
