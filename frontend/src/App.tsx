@@ -3,17 +3,14 @@ import { useAuth } from "./features/auth/AuthContext";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
 import { PackOpener } from "./features/packs/PackOpener";
-import { MovieList } from "./features/movies/MovieList";
 import { MovieDetail } from "./features/movies/MovieDetail";
-import { SeriesList } from "./features/series/SeriesList";
 import { SeriesDetail } from "./features/series/SeriesDetail";
 import { PersonDetail } from "./features/people/PersonDetail";
 import { ShopScreen } from "./features/shop/ShopScreen";
 import { Link } from "react-router-dom";
-import { InventoryScreen } from "./features/inventory/InventoryScreen";
+import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { MarketplaceScreen } from "./features/marketplace/MarketplaceScreen";
-import { FriendsScreen } from "./features/social/FriendsScreen";
-import { TradingScreen } from "./features/trading/TradingScreen";
+import { SocialScreen } from "./features/social/SocialScreen";
 
 function App() {
   const { isAuthenticated, isLoading, logout } = useAuth();
@@ -40,7 +37,7 @@ function App() {
                     Voir la boutique →
                   </Link>
                   <Link
-                    to="/inventory"
+                    to="/profile"
                     className="text-[#E50914] text-sm font-bold"
                   >
                     Ma collection →
@@ -52,23 +49,10 @@ function App() {
                     Marketplace →
                   </Link>
                   <Link
-                    to="/friends"
+                    to="/social"
                     className="text-[#E50914] text-sm font-bold"
                   >
-                    Amis →
-                  </Link>
-                  <Link
-                    to="/trading"
-                    className="text-[#E50914] text-sm font-bold"
-                  >
-                    Échanges →
-                  </Link>
-
-                  <Link
-                    to="/inventory"
-                    className="text-[#E50914] text-sm font-bold"
-                  >
-                    Ma collection →
+                    Amis & Social →
                   </Link>
                 </>
               }
@@ -77,10 +61,9 @@ function App() {
             <Route path="/people/:id" element={<PersonDetail />} />
             <Route path="/series/:id" element={<SeriesDetail />} />
             <Route path="/shop" element={<ShopScreen />} />
-            <Route path="/inventory" element={<InventoryScreen />} />
+            <Route path="/profile" element={<ProfileScreen />} />
             <Route path="/marketplace" element={<MarketplaceScreen />} />
-            <Route path="/friends" element={<FriendsScreen />} />
-            <Route path="/trading" element={<TradingScreen />} />
+            <Route path="/social" element={<SocialScreen />} />
           </>
         ) : (
           <Route path="*" element={<LoginPage />} />
