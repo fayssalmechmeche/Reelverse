@@ -9,6 +9,7 @@ use App\Social\FriendshipService;
 use App\User\User;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Achievement\AchievementChecker;
 
 class TradingService
 {
@@ -16,6 +17,7 @@ class TradingService
         private EntityManagerInterface $em,
         private InventoryManager $inventory,
         private FriendshipService $friendshipService,
+        private AchievementChecker $achievementChecker,
     ) {}
 
     /**
@@ -114,6 +116,7 @@ class TradingService
                     : $trade->getProposer();
 
                 $this->inventory->addCard($newOwner, $item->getCard(), 1);
+                $this->achievementChecker->onCardsObtained($newOwner, [$item->getCard()->getRarity()]);
             }
 
             $trade->setStatus(TradeStatus::ACCEPTED);

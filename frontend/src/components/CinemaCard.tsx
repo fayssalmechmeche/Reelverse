@@ -1,4 +1,4 @@
-import { ChevronRight, Sparkles, Heart } from "lucide-react";
+import { ChevronRight, Sparkles, Heart, Coins } from "lucide-react";
 import { RARITY_CONFIG } from "../design/rarity";
 import type { RarityKey } from "../design/rarity";
 
@@ -12,6 +12,9 @@ interface CinemaCardProps {
   quantity?: number;
   isNew?: boolean;
   isWishlisted?: boolean;
+  onToggleWishlist?: () => void;
+  isInSaleList?: boolean;
+  onToggleSaleList?: () => void;
   onClick?: () => void;
   compact?: boolean;
 }
@@ -26,6 +29,9 @@ export function CinemaCard({
   quantity = 0,
   isNew = false,
   isWishlisted = false,
+  onToggleWishlist,
+  isInSaleList = false,
+  onToggleSaleList,
   onClick,
   compact = false,
 }: CinemaCardProps) {
@@ -94,10 +100,56 @@ export function CinemaCard({
 
         <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            {isWishlisted && (
-              <span className="p-1 rounded bg-[#E50914]/20 border border-[#E50914]/40 text-[#E50914]">
-                <Heart className="w-2.5 h-2.5 fill-current" />
-              </span>
+            {onToggleWishlist ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleWishlist();
+                }}
+                title={
+                  isWishlisted
+                    ? "Retirer de la wishlist"
+                    : "Ajouter à la wishlist"
+                }
+                className={`p-1 rounded border transition-colors ${
+                  isWishlisted
+                    ? "bg-[#E50914]/20 border-[#E50914]/40 text-[#E50914]"
+                    : "bg-black/40 border-white/15 text-[#9CA3AF] hover:text-[#E50914] hover:border-[#E50914]/40"
+                }`}
+              >
+                <Heart
+                  className={`w-2.5 h-2.5 ${isWishlisted ? "fill-current" : ""}`}
+                />
+              </button>
+            ) : (
+              isWishlisted && (
+                <span className="p-1 rounded bg-[#E50914]/20 border border-[#E50914]/40 text-[#E50914]">
+                  <Heart className="w-2.5 h-2.5 fill-current" />
+                </span>
+              )
+            )}
+
+            {onToggleSaleList && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSaleList();
+                }}
+                title={
+                  isInSaleList
+                    ? 'Retirer de "à échanger"'
+                    : 'Marquer "à échanger"'
+                }
+                className={`p-1 rounded border transition-colors ${
+                  isInSaleList
+                    ? "bg-[#F59E0B]/20 border-[#F59E0B]/40 text-[#F59E0B]"
+                    : "bg-black/40 border-white/15 text-[#9CA3AF] hover:text-[#F59E0B] hover:border-[#F59E0B]/40"
+                }`}
+              >
+                <Coins className="w-2.5 h-2.5" />
+              </button>
             )}
           </div>
           <span

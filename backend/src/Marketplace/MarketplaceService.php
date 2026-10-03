@@ -9,6 +9,7 @@ use App\Inventory\UserCard;
 use App\User\User;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Achievement\AchievementChecker;
 
 class MarketplaceService
 {
@@ -17,6 +18,7 @@ class MarketplaceService
     public function __construct(
         private EntityManagerInterface $em,
         private InventoryManager $inventory,
+        private AchievementChecker $achievementChecker,
     ) {}
 
     public function createListing(User $seller, int $cardId, int $price): MarketplaceListing
@@ -120,6 +122,7 @@ class MarketplaceService
 
             $listing->markAsSold();
             $this->inventory->addCard($buyer, $listing->getCard(), 1);
+            $this->achievementChecker->onCardsObtained($buyer, [$listing->getCard()->getRarity()]);
 
             $this->em->flush();
 

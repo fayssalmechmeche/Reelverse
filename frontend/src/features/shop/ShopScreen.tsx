@@ -1,91 +1,70 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CinemaCard } from "../../components/CinemaCard";
-import { resolveCard } from "../cards/resolveCard";
-import type { RarityKey } from "../../design/rarity";
+import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
+import {
+  useShop,
+  useBuyShopCard,
+  useRefreshShopCard,
+  type ShopCardData,
+} from "./useShop";
 
-interface ShopCardData {
-  id: number;
-  cardId: number;
-  type: "person" | "movie" | "series" | "character";
-  entityId: number;
-  rarity: RarityKey;
-  price: number;
-  sold: boolean;
-  refreshed: boolean;
-}
-
-interface ResolvedShopCard extends ShopCardData {
-  name: string;
-  subtitle: string;
-  imageUrl: string | null;
-  typeEmoji: string;
-  typeLabel: string;
-}
-
-async function fetchShop(): Promise<{ cards: ShopCardData[] }> {
-  const res = await fetch("/api/shop", { credentials: "include" });
-  return res.json();
-}
+const TYPE_META: Record<
+  ShopCardData["type"],
+  { emoji: string; label: string }
+> = {
+  person: { emoji: "👤", label: "Acteur" },
+  movie: { emoji: "🎬", label: "Film" },
+  series: { emoji: "📺", label: "Série" },
+  character: { emoji: "🎭", label: "Personnage" },
+};
 
 export function ShopScreen() {
-  const [cards, setCards] = useState<ResolvedShopCard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionError, setActionError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { data: shopCards = [], isLoading } = useShop();
+  const buyCard = useBuyShopCard();
+  const refreshCard = useRefreshShopCard();
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
-    const data = await fetchShop();
-    const resolved = await Promise.all(
-      data.cards.map(async (c) => {
-        const info = await resolveCard(c);
-        return { ...c, ...info };
+  const resolvedResults = useResolvedCards(
+    shopCards.map(
+      (c): CardRef => ({
+        type: c.type,
+        entityId: c.entityId,
+        rarity: c.rarity,
       }),
-    );
-    setCards(resolved);
-    setLoading(false);
-  }
+    ),
+  );
 
-  useEffect(() => {
-    load();
-  }, []);
+  const cards = useMemo(
+    () =>
+      shopCards.map((c, idx) => {
+        const info = resolvedResults[idx]?.data;
+        const meta = TYPE_META[c.type];
+        return {
+          ...c,
+          name: info?.name ?? `${c.type} #${c.entityId}`,
+          subtitle: info?.subtitle ?? "",
+          imageUrl: info?.imageUrl ?? null,
+          typeEmoji: info?.typeEmoji ?? meta.emoji,
+          typeLabel: meta.label,
+        };
+      }),
+    [shopCards, resolvedResults],
+  );
 
-  async function handleBuy(shopCardId: number) {
+  function run(promise: Promise<unknown>) {
     setActionError(null);
-    const res = await fetch(`/api/shop/${shopCardId}/buy`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) {
-      const body = await res.json();
-      setActionError(body.error ?? "Erreur lors de l'achat.");
-      return;
-    }
-    await load();
+    promise.catch((err: Error) => setActionError(err.message));
   }
 
-  async function handleRefresh(shopCardId: number) {
-    setActionError(null);
-    const res = await fetch(`/api/shop/${shopCardId}/refresh`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) {
-      const body = await res.json();
-      setActionError(body.error ?? "Erreur lors du refresh.");
-      return;
-    }
-    await load();
-  }
-
-  function goToDetail(card: ResolvedShopCard) {
+  function goToDetail(card: { type: ShopCardData["type"]; entityId: number }) {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
   }
 
-  if (loading) return <p className="text-[#9CA3AF]">Chargement du shop...</p>;
+  if (isLoading) return <p className="text-[#9CA3AF]">Chargement du shop...</p>;
 
   return (
     <div className="space-y-4">
@@ -113,15 +92,17 @@ export function ShopScreen() {
             {!card.sold && (
               <div className="flex gap-1.5">
                 <button
-                  onClick={() => handleBuy(card.id)}
-                  className="flex-1 px-2 py-1.5 rounded-lg bg-[#E50914] hover:bg-[#f6121d] text-white text-[11px] font-black uppercase tracking-wide"
+                  onClick={() => run(buyCard.mutateAsync(card.id))}
+                  disabled={buyCard.isPending}
+                  className="flex-1 px-2 py-1.5 rounded-lg bg-[#E50914] hover:bg-[#f6121d] text-white text-[11px] font-black uppercase tracking-wide disabled:opacity-50"
                 >
                   {card.price} Coins
                 </button>
                 {!card.refreshed && (
                   <button
-                    onClick={() => handleRefresh(card.id)}
-                    className="px-2 py-1.5 rounded-lg bg-[#22222C] hover:bg-[#2A2A36] text-[#9CA3AF] text-[11px] font-bold"
+                    onClick={() => run(refreshCard.mutateAsync(card.id))}
+                    disabled={refreshCard.isPending}
+                    className="px-2 py-1.5 rounded-lg bg-[#22222C] hover:bg-[#2A2A36] text-[#9CA3AF] text-[11px] font-bold disabled:opacity-50"
                   >
                     ↻
                   </button>
