@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trophy } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
 import {
   useInventory,
@@ -197,7 +198,17 @@ export function ProfileScreen() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-black text-[#F3F4F6]">Ma collection</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-black text-[#F3F4F6]">Ma collection</h2>
+        <button
+          type="button"
+          onClick={() => navigate("/achievements")}
+          className="shrink-0 px-3 py-1.5 rounded-xl bg-[#121217] hover:bg-[#181820] border border-[#F59E0B]/30 text-[11px] font-bold text-[#FBBF24] flex items-center gap-1.5"
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          <span>Succès</span>
+        </button>
+      </div>
 
       <div className="rounded-2xl bg-[#121217] border border-white/[0.08] p-3.5 space-y-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
