@@ -335,6 +335,64 @@ class CollectionService
         return (int) $this->em->getRepository(UserCompletedCollection::class)->count(['user' => $user]);
     }
 
+    /**
+     * Liste les collections (acteur/film/série) déjà complétées à 100% par
+     * ce joueur, les plus récentes d'abord, pour l'onglet "Collections 100%".
+     */
+    public function listCompletedCollections(User $user): array
+    {
+        $completions = $this->em->getRepository(UserCompletedCollection::class)->findBy(
+            ['user' => $user],
+            ['completedAt' => 'DESC'],
+        );
+
+        $result = [];
+        foreach ($completions as $completion) {
+            $entity = match ($completion->getType()) {
+                'person' => $this->em->getRepository(Person::class)->find($completion->getEntityId()),
+                'movie' => $this->em->getRepository(Movie::class)->find($completion->getEntityId()),
+                'series' => $this->em->getRepository(Series::class)->find($completion->getEntityId()),
+                default => null,
+            };
+
+            if (!$entity) {
+                continue;
+            }
+
+            $result[] = match ($completion->getType()) {
+                'person' => [
+                    'type' => 'person',
+                    'entityId' => $entity->getId(),
+                    'name' => $entity->getName(),
+                    'imageUrl' => $this->image($entity->getProfilePath()),
+                    'typeEmoji' => '👤',
+                    'typeLabel' => 'Acteur',
+                    'completedAt' => $completion->getCompletedAt()->format(\DateTimeInterface::ATOM),
+                ],
+                'movie' => [
+                    'type' => 'movie',
+                    'entityId' => $entity->getId(),
+                    'name' => $entity->getTitle(),
+                    'imageUrl' => $this->image($entity->getPosterPath()),
+                    'typeEmoji' => '🎬',
+                    'typeLabel' => 'Film',
+                    'completedAt' => $completion->getCompletedAt()->format(\DateTimeInterface::ATOM),
+                ],
+                'series' => [
+                    'type' => 'series',
+                    'entityId' => $entity->getId(),
+                    'name' => $entity->getName(),
+                    'imageUrl' => $this->image($entity->getPosterPath()),
+                    'typeEmoji' => '📺',
+                    'typeLabel' => 'Série',
+                    'completedAt' => $completion->getCompletedAt()->format(\DateTimeInterface::ATOM),
+                ],
+            };
+        }
+
+        return $result;
+    }
+
     /** @return Person[] */
     private function actorsAppearingIn(Movie|Series $entity): array
     {
