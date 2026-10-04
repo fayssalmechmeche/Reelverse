@@ -11,6 +11,7 @@ import { ShopScreen } from "./features/shop/ShopScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { MarketplaceScreen } from "./features/marketplace/MarketplaceScreen";
 import { SocialScreen } from "./features/social/SocialScreen";
+import { AchievementsScreen } from "./features/achievements/AchievementsScreen";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -90,6 +91,14 @@ function App() {
             element={
               <AppShell>
                 <SocialScreen />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/achievements"
+            element={
+              <AppShell>
+                <AchievementsScreen />
               </AppShell>
             }
           />

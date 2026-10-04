@@ -135,14 +135,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
             </button>
 
-            <div className="flex items-center gap-1.5 bg-[#121217] border border-white/[0.08] rounded-xl px-2.5 py-1.5">
+            <button
+              onClick={() => navigate("/achievements")}
+              title="Voir vos Succès"
+              className="flex items-center gap-1.5 bg-[#121217] hover:bg-[#181820] border border-white/[0.08] rounded-xl px-2.5 py-1.5"
+            >
               <div className="w-4 h-4 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B] flex items-center justify-center">
                 <Coins className="w-2.5 h-2.5 text-[#F59E0B]" />
               </div>
               <span className="font-bold text-xs text-[#F3F4F6] tracking-tight">
                 {(me?.coins ?? 0).toLocaleString("fr-FR")}
               </span>
-            </div>
+            </button>
 
             <button
               onClick={logout}

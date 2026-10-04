@@ -23,7 +23,13 @@ class Shop
     #[ORM\Column(type: 'date_immutable')]
     private \DateTimeImmutable $forDate;
 
+    // Sans OrderBy explicite, Postgres ne garantit aucun ordre de lecture :
+    // un simple UPDATE (ex: refresh d'une carte) peut déplacer physiquement
+    // la ligne et la faire ressortir en dernier lors du prochain SELECT.
+    // On fixe donc l'ordre par id pour que chaque carte garde toujours sa
+    // position d'origine dans la grille, même après un refresh.
     #[ORM\OneToMany(targetEntity: ShopCard::class, mappedBy: 'shop', cascade: ['persist'])]
+    #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $shopCards;
 
     public function __construct()
