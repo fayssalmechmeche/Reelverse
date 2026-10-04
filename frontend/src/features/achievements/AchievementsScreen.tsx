@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
-  Trophy,
   Lock,
   CheckCircle2,
   Coins,
@@ -17,16 +15,16 @@ import {
   useLoginStreak,
   useClaimLoginStreak,
 } from "../loginStreak/useLoginStreak";
-import { useCompletedCollections } from "../collection/useCompletedCollections";
 
-type QuestTab = "ALL" | "DAILY" | "WEEKLY" | "ACHIEVEMENTS" | "COLLECTIONS";
+// La progression des collections (y compris celles à 100%) vit désormais
+// dans l'onglet Vitrine & Cartes > Collections du profil.
+type QuestTab = "ALL" | "DAILY" | "WEEKLY" | "ACHIEVEMENTS";
 
 const TABS: { id: QuestTab; label: string }[] = [
   { id: "ALL", label: "Tout" },
   { id: "DAILY", label: "Quotidiennes" },
   { id: "WEEKLY", label: "Hebdo" },
   { id: "ACHIEVEMENTS", label: "Succès" },
-  { id: "COLLECTIONS", label: "Collections 100%" },
 ];
 
 function QuestRow({
@@ -252,88 +250,6 @@ function LoginStreakModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CompletedCollectionsSection() {
-  const navigate = useNavigate();
-  const {
-    data: collections = [],
-    isLoading,
-    error,
-  } = useCompletedCollections();
-
-  function goToCollection(c: { type: string; entityId: number }) {
-    if (c.type === "person") navigate(`/people/${c.entityId}`);
-    else if (c.type === "movie") navigate(`/movies/${c.entityId}`);
-    else if (c.type === "series") navigate(`/series/${c.entityId}`);
-  }
-
-  return (
-    <section className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-black text-[#F3F4F6]">
-          Récompenses de Collections complétées à 100%
-        </h2>
-        <span className="text-[11px] font-bold text-[#9CA3AF]">
-          {collections.length} complétée{collections.length > 1 ? "s" : ""}
-        </span>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-[#9CA3AF] text-sm py-6 justify-center">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Chargement...</span>
-        </div>
-      ) : error ? (
-        <div className="p-3 rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 flex items-center gap-2 text-xs text-[#F3F4F6]">
-          <AlertCircle className="w-4 h-4 text-[#E50914] shrink-0" />
-          <span>Impossible de charger les collections complétées.</span>
-        </div>
-      ) : collections.length === 0 ? (
-        <p className="text-xs text-[#9CA3AF]">
-          Aucune collection complétée à 100% pour le moment. Obtenez toutes les
-          cartes d'un acteur, d'un film ou d'une série pour en débloquer une.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {collections.map((c) => (
-            <button
-              key={`${c.type}-${c.entityId}`}
-              type="button"
-              onClick={() => goToCollection(c)}
-              className="rounded-xl p-3.5 border bg-[#181820] border-[#F59E0B]/30 flex items-center gap-3 text-left hover:border-[#F59E0B] transition-all"
-            >
-              <div className="w-9 h-9 shrink-0 rounded-xl overflow-hidden bg-[#121217] border border-[#F59E0B]/40 flex items-center justify-center">
-                {c.imageUrl ? (
-                  <img
-                    src={c.imageUrl}
-                    alt={c.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span>{c.typeEmoji}</span>
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0 space-y-1">
-                <h3 className="text-xs sm:text-sm font-bold text-[#F3F4F6] truncate">
-                  {c.name}
-                </h3>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] text-[#9CA3AF]">
-                    {c.typeEmoji} {c.typeLabel} • 100%
-                  </span>
-                  <span className="text-[10px] text-[#71717A]">
-                    le {new Date(c.completedAt).toLocaleDateString("fr-FR")}
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 export function AchievementsScreen() {
   const { data: achievements = [], isLoading, error } = useAchievements();
   const [tab, setTab] = useState<QuestTab>("ALL");
@@ -419,18 +335,6 @@ export function AchievementsScreen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex items-center justify-center">
-          <Trophy className="w-5 h-5 text-[#F59E0B]" />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-[#F3F4F6]">Quêtes & Succès</h2>
-          <p className="text-[11px] text-[#9CA3AF]">
-            {unlockedCount} / {achievements.length} succès débloqués
-          </p>
-        </div>
-      </div>
-
       <div className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {TABS.map((t) => (
@@ -480,10 +384,6 @@ export function AchievementsScreen() {
         )}
 
         {(tab === "ALL" || tab === "ACHIEVEMENTS") && achievementsSection}
-
-        {(tab === "ALL" || tab === "COLLECTIONS") && (
-          <CompletedCollectionsSection />
-        )}
       </div>
     </div>
   );

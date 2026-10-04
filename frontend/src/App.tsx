@@ -9,9 +9,8 @@ import { SeriesDetail } from "./features/series/SeriesDetail";
 import { PersonDetail } from "./features/people/PersonDetail";
 import { ShopScreen } from "./features/shop/ShopScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
+import { CollectionScreen } from "./features/collection/CollectionScreen";
 import { MarketplaceScreen } from "./features/marketplace/MarketplaceScreen";
-import { SocialScreen } from "./features/social/SocialScreen";
-import { AchievementsScreen } from "./features/achievements/AchievementsScreen";
 import { PlayerProfileScreen } from "./features/playerProfile/PlayerProfileScreen";
 
 function App() {
@@ -72,6 +71,14 @@ function App() {
             }
           />
           <Route
+            path="/collection"
+            element={
+              <AppShell>
+                <CollectionScreen />
+              </AppShell>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <AppShell>
@@ -84,22 +91,6 @@ function App() {
             element={
               <AppShell>
                 <MarketplaceScreen />
-              </AppShell>
-            }
-          />
-          <Route
-            path="/social"
-            element={
-              <AppShell>
-                <SocialScreen />
-              </AppShell>
-            }
-          />
-          <Route
-            path="/achievements"
-            element={
-              <AppShell>
-                <AchievementsScreen />
               </AppShell>
             }
           />

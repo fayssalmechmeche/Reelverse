@@ -23,10 +23,10 @@ function formatSecondsMMSS(totalSeconds: number) {
 
 const NAV_ITEMS = [
   { path: "/", label: "Accueil", icon: Package },
-  { path: "/profile", label: "Ma Collection", icon: Layers },
+  { path: "/collection", label: "Ma Collection", icon: Layers },
   { path: "/marketplace", label: "Marché", icon: Tag },
   { path: "/shop", label: "Boutique du Jour", icon: ShoppingBag },
-  { path: "/social", label: "Amis & Social", icon: Users },
+  { path: "/profile", label: "Profil", icon: Users },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     }`}
                   >
                     <span>{item.label}</span>
-                    {item.path === "/social" && incomingCount > 0 && (
+                    {item.path === "/profile" && incomingCount > 0 && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E50914] text-white">
                         +{incomingCount}
                       </span>
@@ -136,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
 
             <button
-              onClick={() => navigate("/achievements")}
+              onClick={() => navigate("/profile?tab=quests")}
               title="Voir vos Succès"
               className="flex items-center gap-1.5 bg-[#121217] hover:bg-[#181820] border border-white/[0.08] rounded-xl px-2.5 py-1.5"
             >
@@ -169,7 +169,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
           const IconComp = item.icon;
-          const badge = item.path === "/social" ? incomingCount : 0;
+          const badge = item.path === "/profile" ? incomingCount : 0;
           return (
             <Link
               key={item.path}

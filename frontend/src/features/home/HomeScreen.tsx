@@ -256,7 +256,7 @@ export function HomeScreen() {
       {/* Raccourcis rapides */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/collection")}
           className="rounded-2xl bg-[#121217] hover:bg-[#181820] border border-white/[0.08] p-3.5 cursor-pointer transition-all flex items-center justify-between group"
         >
           <div>
@@ -302,7 +302,7 @@ export function HomeScreen() {
 
         <div className="rounded-2xl bg-[#121217] border border-white/[0.08] p-3.5 flex items-center justify-between group">
           <div
-            onClick={() => navigate("/social")}
+            onClick={() => navigate("/profile?tab=social")}
             className="cursor-pointer flex-1"
           >
             <div className="text-[10px] font-bold uppercase tracking-wider text-[#E50914]">
@@ -315,7 +315,7 @@ export function HomeScreen() {
           {friends.length > 0 && (
             <button
               type="button"
-              onClick={() => navigate("/social")}
+              onClick={() => navigate("/profile?tab=social")}
               className="px-2.5 py-1.5 rounded-xl bg-[#181820] hover:bg-[#22222C] border border-[#F59E0B]/40 text-[11px] font-bold text-[#FBBF24] flex items-center gap-1 shrink-0"
             >
               <Repeat className="w-3 h-3" />
@@ -334,7 +334,7 @@ export function HomeScreen() {
             </h2>
             <button
               type="button"
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/collection")}
               className="text-xs font-bold text-[#E50914] flex items-center gap-0.5"
             >
               <span>Tout voir</span>

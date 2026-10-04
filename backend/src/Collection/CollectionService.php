@@ -393,6 +393,135 @@ class CollectionService
         return $result;
     }
 
+    /**
+     * Liste la progression (ownedCount/totalCount) de toutes les collections
+     * Acteur / Film / Série dans lesquelles ce joueur possède déjà au moins
+     * une carte, pour l'onglet "Collections" de la Vitrine.
+     *
+     * On ne recalcule que les collections "candidates" (déduites des cartes
+     * Film/Série possédées pour les Acteurs, et des cartes Personnage
+     * possédées pour les Films/Séries), afin d'éviter de parcourir tout le
+     * catalogue à chaque appel.
+     */
+    public function listCollectionsProgress(User $user): array
+    {
+        $ownedMovieAndSeriesUserCards = $this->em->getRepository(UserCard::class)->createQueryBuilder('uc')
+            ->select('uc', 'c')
+            ->join('uc.card', 'c')
+            ->where('uc.user = :user')
+            ->andWhere('uc.quantity > 0')
+            ->andWhere('c.type IN (:types)')
+            ->setParameter('user', $user)
+            ->setParameter('types', [CardType::MOVIE->value, CardType::SERIES->value])
+            ->getQuery()
+            ->getResult();
+
+        /** @var array<int, Person> $candidatePersons */
+        $candidatePersons = [];
+        foreach ($ownedMovieAndSeriesUserCards as $userCard) {
+            $card = $userCard->getCard();
+            $entity = $card->getType() === CardType::MOVIE
+                ? $this->em->getRepository(Movie::class)->find($card->getEntityId())
+                : $this->em->getRepository(Series::class)->find($card->getEntityId());
+            if (!$entity) {
+                continue;
+            }
+            foreach ($this->actorsAppearingIn($entity) as $person) {
+                $candidatePersons[$person->getId()] = $person;
+            }
+        }
+
+        $ownedCharacterUserCards = $this->em->getRepository(UserCard::class)->createQueryBuilder('uc')
+            ->select('uc', 'c')
+            ->join('uc.card', 'c')
+            ->where('uc.user = :user')
+            ->andWhere('uc.quantity > 0')
+            ->andWhere('c.type = :type')
+            ->setParameter('user', $user)
+            ->setParameter('type', CardType::CHARACTER->value)
+            ->getQuery()
+            ->getResult();
+
+        /** @var array<int, Movie> $candidateMovies */
+        $candidateMovies = [];
+        /** @var array<int, Series> $candidateSeries */
+        $candidateSeries = [];
+        foreach ($ownedCharacterUserCards as $userCard) {
+            $character = $this->em->getRepository(Character::class)->find($userCard->getCard()->getEntityId());
+            if (!$character) {
+                continue;
+            }
+            if ($movie = $character->getMovie()) {
+                $candidateMovies[$movie->getId()] = $movie;
+            }
+            if ($series = $character->getSeries()) {
+                $candidateSeries[$series->getId()] = $series;
+            }
+        }
+
+        $result = [];
+
+        foreach ($candidatePersons as $person) {
+            $c = $this->getPersonCollection($user, $person);
+            if ($c['ownedCount'] > 0) {
+                $result[] = [
+                    'type' => 'person',
+                    'entityId' => $person->getId(),
+                    'name' => $person->getName(),
+                    'imageUrl' => $this->image($person->getProfilePath()),
+                    'typeEmoji' => '👤',
+                    'typeLabel' => 'Acteur',
+                    'unitLabel' => 'œuvres',
+                    'ownedCount' => $c['ownedCount'],
+                    'totalCount' => $c['totalCount'],
+                ];
+            }
+        }
+
+        foreach ($candidateMovies as $movie) {
+            $c = $this->getMovieCollection($user, $movie);
+            if ($c['ownedCount'] > 0) {
+                $result[] = [
+                    'type' => 'movie',
+                    'entityId' => $movie->getId(),
+                    'name' => $movie->getTitle(),
+                    'imageUrl' => $this->image($movie->getPosterPath()),
+                    'typeEmoji' => '🎬',
+                    'typeLabel' => 'Film',
+                    'unitLabel' => 'personnages',
+                    'ownedCount' => $c['ownedCount'],
+                    'totalCount' => $c['totalCount'],
+                ];
+            }
+        }
+
+        foreach ($candidateSeries as $series) {
+            $c = $this->getSeriesCollection($user, $series);
+            if ($c['ownedCount'] > 0) {
+                $result[] = [
+                    'type' => 'series',
+                    'entityId' => $series->getId(),
+                    'name' => $series->getName(),
+                    'imageUrl' => $this->image($series->getPosterPath()),
+                    'typeEmoji' => '📺',
+                    'typeLabel' => 'Série',
+                    'unitLabel' => 'personnages',
+                    'ownedCount' => $c['ownedCount'],
+                    'totalCount' => $c['totalCount'],
+                ];
+            }
+        }
+
+        // Progression la plus avancée d'abord, puis ordre alphabétique
+        usort($result, function (array $a, array $b) {
+            $pctA = $a['totalCount'] > 0 ? $a['ownedCount'] / $a['totalCount'] : 0;
+            $pctB = $b['totalCount'] > 0 ? $b['ownedCount'] / $b['totalCount'] : 0;
+            return ($pctB <=> $pctA) ?: strcmp($a['name'], $b['name']);
+        });
+
+        return $result;
+    }
+
     /** @return Person[] */
     private function actorsAppearingIn(Movie|Series $entity): array
     {
