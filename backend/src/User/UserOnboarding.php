@@ -3,6 +3,7 @@
 namespace App\User;
 
 use App\Economy\Wallet\Wallet;
+use App\LoginStreak\LoginStreak;
 use App\Pack\PackStock;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -24,5 +25,9 @@ class UserOnboarding
         $stock = new PackStock();
         $stock->setUser($user);
         $this->em->persist($stock);
+
+        $loginStreak = new LoginStreak();
+        $loginStreak->setUser($user);
+        $this->em->persist($loginStreak);
     }
 }

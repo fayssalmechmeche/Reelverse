@@ -8,9 +8,15 @@ import {
   AlertCircle,
   Gift,
   Sparkles,
+  Calendar,
+  X,
 } from "lucide-react";
 import { useAchievements } from "./useAchievements";
 import { useQuests, useClaimQuest, type QuestData } from "../quests/useQuests";
+import {
+  useLoginStreak,
+  useClaimLoginStreak,
+} from "../loginStreak/useLoginStreak";
 
 type QuestTab = "ALL" | "DAILY" | "WEEKLY" | "ACHIEVEMENTS" | "COLLECTIONS";
 
@@ -142,9 +148,126 @@ function QuestSection({
   );
 }
 
+function LoginStreakModal({ onClose }: { onClose: () => void }) {
+  const { data, isLoading, error } = useLoginStreak();
+  const claimStreak = useClaimLoginStreak();
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  function handleClaim() {
+    setClaimError(null);
+    claimStreak.mutate(undefined, {
+      onError: (err: Error) => setClaimError(err.message),
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-lg rounded-3xl bg-[#121217] border border-white/15 p-5 sm:p-6 space-y-5 shadow-2xl">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-[#F59E0B] flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" />
+              <span>Récompense de connexion quotidienne</span>
+            </div>
+            <h2 className="text-xl font-black text-[#F3F4F6] mt-1">
+              {data
+                ? `Série en cours : Jour ${data.currentDay} / 7`
+                : "Chargement..."}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg bg-[#181820] text-[#9CA3AF] hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-[#9CA3AF] text-sm py-6 justify-center">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Chargement...</span>
+          </div>
+        ) : error ? (
+          <div className="p-3 rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 flex items-center gap-2 text-xs text-[#F3F4F6]">
+            <AlertCircle className="w-4 h-4 text-[#E50914] shrink-0" />
+            <span>Impossible de charger la récompense de connexion.</span>
+          </div>
+        ) : data ? (
+          <>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+              {data.rewards.map((item) => {
+                const isPast = item.day < data.currentDay;
+                const isClaimedToday =
+                  item.day === data.currentDay && !data.claimable;
+                const isClaimed = isPast || isClaimedToday;
+                const isToday = item.day === data.currentDay;
+                const isMilestone = item.day === 7;
+
+                return (
+                  <div
+                    key={item.day}
+                    className={`p-3 rounded-2xl border text-center flex flex-col items-center justify-between gap-1.5 ${
+                      isMilestone ? "col-span-3 sm:col-span-2" : ""
+                    } ${
+                      isToday && !isClaimed
+                        ? "bg-[#181820] border-[#F59E0B] shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+                        : isClaimed
+                          ? "bg-[#181820]/40 border-white/5 opacity-60"
+                          : "bg-[#181820]/80 border-white/10"
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase text-[#9CA3AF]">
+                      Jour {item.day}
+                    </span>
+                    <div className="font-black text-sm text-[#F59E0B] flex items-center gap-1">
+                      <Coins className="w-3.5 h-3.5" />+{item.coinsReward}
+                    </div>
+                    <span className="text-[10px] font-bold text-[#F3F4F6]">
+                      {isClaimed
+                        ? "Récupéré ✓"
+                        : isToday
+                          ? "Aujourd'hui"
+                          : "À venir"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {claimError && (
+              <p className="text-[#F87171] text-xs">{claimError}</p>
+            )}
+
+            <div className="flex items-center justify-end pt-2 border-t border-white/10">
+              {data.claimable ? (
+                <button
+                  type="button"
+                  onClick={handleClaim}
+                  disabled={claimStreak.isPending}
+                  className="px-4 py-2.5 rounded-xl bg-[#E50914] hover:bg-[#f6121d] text-white text-xs font-black uppercase disabled:opacity-50"
+                >
+                  Récupérer +{data.coinsReward} Coins
+                </button>
+              ) : (
+                <span className="text-xs font-bold text-[#9CA3AF]">
+                  Revenez demain pour le jour suivant.
+                </span>
+              )}
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function AchievementsScreen() {
   const { data: achievements = [], isLoading, error } = useAchievements();
   const [tab, setTab] = useState<QuestTab>("ALL");
+  const [showLoginStreakModal, setShowLoginStreakModal] = useState(false);
+  const { data: loginStreak } = useLoginStreak();
 
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
@@ -257,14 +380,24 @@ export function AchievementsScreen() {
 
         <button
           type="button"
-          disabled
-          title="Bientôt disponible"
-          className="px-3 py-1.5 rounded-xl bg-[#181820] border border-[#F59E0B]/20 text-xs font-bold text-[#71717A] flex items-center gap-1.5 cursor-not-allowed opacity-70"
+          onClick={() => setShowLoginStreakModal(true)}
+          title="Récompense de connexion quotidienne (Calendrier 7 jours)"
+          className="relative px-3 py-1.5 rounded-xl bg-[#181820] hover:bg-[#22222C] border border-[#F59E0B]/40 text-xs font-bold text-[#F3F4F6] flex items-center gap-1.5"
         >
-          <Gift className="w-4 h-4 text-[#71717A]" />
-          <span>Calendrier 7 Jours (bientôt)</span>
+          <Gift className="w-4 h-4 text-[#F59E0B]" />
+          <span>
+            Calendrier 7 Jours
+            {loginStreak ? ` (J${loginStreak.currentDay})` : ""}
+          </span>
+          {loginStreak?.claimable && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#E50914] animate-pulse" />
+          )}
         </button>
       </div>
+
+      {showLoginStreakModal && (
+        <LoginStreakModal onClose={() => setShowLoginStreakModal(false)} />
+      )}
 
       <div className="space-y-4">
         {(tab === "ALL" || tab === "DAILY") && (
