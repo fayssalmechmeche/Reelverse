@@ -38,6 +38,13 @@ export function PackRevealModal({
       setAnimKey((k) => k + 1);
       return;
     }
+    // Sur mobile, le récapitulatif fait doublon avec les cartes qu'on vient
+    // de voir une par une : on ferme directement au lieu de l'afficher.
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+    if (isMobile) {
+      onClose();
+      return;
+    }
     setStage("summary");
   }
 
@@ -161,7 +168,9 @@ export function PackRevealModal({
         >
           {currentIndex < cards.length - 1
             ? "Carte suivante"
-            : "Voir le récapitulatif"}
+            : typeof window !== "undefined" && window.innerWidth < 640
+              ? "Terminer"
+              : "Voir le récapitulatif"}
         </button>
       </div>
     </div>
