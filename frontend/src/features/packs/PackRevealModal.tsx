@@ -8,6 +8,7 @@ export interface RevealCard {
   type: "person" | "movie" | "series" | "character";
   entityId: number;
   rarity: RarityKey;
+  isNew: boolean;
   name: string;
   subtitle: string;
   imageUrl: string | null;
@@ -80,7 +81,7 @@ export function PackRevealModal({
                 typeLabel={c.typeLabel}
                 rarity={c.rarity}
                 quantity={1}
-                isNew={true}
+                isNew={c.isNew}
                 compact={true}
                 onClick={() => onSelectCard(c)}
               />
@@ -150,7 +151,7 @@ export function PackRevealModal({
             typeLabel={currentCard.typeLabel}
             rarity={currentCard.rarity}
             quantity={1}
-            isNew={true}
+            isNew={currentCard.isNew}
           />
         </div>
 

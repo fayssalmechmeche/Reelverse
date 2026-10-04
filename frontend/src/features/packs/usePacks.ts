@@ -24,6 +24,7 @@ export interface DrawnCard {
   type: "person" | "movie" | "series" | "character";
   entityId: number;
   rarity: RarityKey;
+  isNew: boolean;
 }
 
 export interface OpenPackResponse {
