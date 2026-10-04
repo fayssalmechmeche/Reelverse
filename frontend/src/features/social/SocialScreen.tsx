@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   UserPlus,
   UserCheck,
@@ -46,6 +46,9 @@ const STATUS_LABEL: Record<TradeData["status"], string> = {
   expired: "Expirée",
 };
 
+const FRIENDS_PAGE_SIZE = 10;
+const HISTORY_PAGE_SIZE = 10;
+
 export function SocialScreen() {
   const { data: me } = useMe();
   const { data, isLoading } = useFriendsData();
@@ -60,6 +63,8 @@ export function SocialScreen() {
     id: number;
     username: string;
   } | null>(null);
+  const [friendsPage, setFriendsPage] = useState(0);
+  const [historyPage, setHistoryPage] = useState(0);
 
   const searchUsers = useSearchUsers();
   const sendRequest = useSendFriendRequest();
@@ -124,6 +129,45 @@ export function SocialScreen() {
     () => trades.filter((t) => t.status !== "pending"),
     [trades],
   );
+
+  const friends = data?.friends ?? [];
+  const friendsTotalPages = Math.max(
+    1,
+    Math.ceil(friends.length / FRIENDS_PAGE_SIZE),
+  );
+  const friendsPageItems = useMemo(
+    () =>
+      friends.slice(
+        friendsPage * FRIENDS_PAGE_SIZE,
+        friendsPage * FRIENDS_PAGE_SIZE + FRIENDS_PAGE_SIZE,
+      ),
+    [friends, friendsPage],
+  );
+
+  useEffect(() => {
+    if (friendsPage > friendsTotalPages - 1) {
+      setFriendsPage(Math.max(0, friendsTotalPages - 1));
+    }
+  }, [friendsPage, friendsTotalPages]);
+
+  const historyTotalPages = Math.max(
+    1,
+    Math.ceil(historyTrades.length / HISTORY_PAGE_SIZE),
+  );
+  const historyPageItems = useMemo(
+    () =>
+      historyTrades.slice(
+        historyPage * HISTORY_PAGE_SIZE,
+        historyPage * HISTORY_PAGE_SIZE + HISTORY_PAGE_SIZE,
+      ),
+    [historyTrades, historyPage],
+  );
+
+  useEffect(() => {
+    if (historyPage > historyTotalPages - 1) {
+      setHistoryPage(Math.max(0, historyTotalPages - 1));
+    }
+  }, [historyPage, historyTotalPages]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -321,45 +365,15 @@ export function SocialScreen() {
           Propositions d'échange ({pendingTrades.length})
         </h3>
 
-        {data.friends.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {data.friends.map((f) => (
-              <button
-                key={f.id}
-                onClick={() =>
-                  setTradeModalFriend({ id: f.userId, username: f.username })
-                }
-                className="px-3 py-1.5 rounded-xl bg-[#E50914] hover:bg-[#f6121d] text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <Repeat className="w-3.5 h-3.5" />
-                Échanger avec @{f.username}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {pendingTrades.length > 0 && (
+        {pendingTrades.length > 0 ? (
           <div className="space-y-3 pt-2">
             {pendingTrades.map((trade) => (
               <TradeCard key={trade.id} trade={trade} />
             ))}
           </div>
-        )}
-
-        {historyTrades.length > 0 && (
-          <div className="space-y-3 pt-2 border-t border-white/[0.06]">
-            <h4 className="text-xs font-black uppercase tracking-wider text-[#9CA3AF]">
-              Historique ({historyTrades.length})
-            </h4>
-            {historyTrades.map((trade) => (
-              <TradeCard key={trade.id} trade={trade} />
-            ))}
-          </div>
-        )}
-
-        {trades.length === 0 && (
+        ) : (
           <p className="text-xs text-[#9CA3AF]">
-            Aucun échange pour le moment.
+            Aucune proposition en attente.
           </p>
         )}
       </section>
@@ -484,7 +498,7 @@ export function SocialScreen() {
           </p>
         ) : (
           <div className="space-y-2.5">
-            {data.friends.map((f) => (
+            {friendsPageItems.map((f) => (
               <div
                 key={f.id}
                 className="p-3.5 rounded-xl bg-[#181820] border border-white/[0.06] flex flex-wrap items-center justify-between gap-3"
@@ -534,6 +548,32 @@ export function SocialScreen() {
             ))}
           </div>
         )}
+
+        {friendsTotalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setFriendsPage((p) => Math.max(0, p - 1))}
+              disabled={friendsPage === 0}
+              className="px-3.5 py-2 rounded-xl bg-[#181820] border border-white/[0.08] text-xs font-bold text-[#9CA3AF] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Précédent
+            </button>
+            <span className="text-xs font-bold text-[#9CA3AF]">
+              Page {friendsPage + 1} / {friendsTotalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                setFriendsPage((p) => Math.min(friendsTotalPages - 1, p + 1))
+              }
+              disabled={friendsPage >= friendsTotalPages - 1}
+              className="px-3.5 py-2 rounded-xl bg-[#181820] border border-white/[0.08] text-xs font-bold text-[#9CA3AF] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Suivant
+            </button>
+          </div>
+        )}
       </section>
 
       <section className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
@@ -565,6 +605,45 @@ export function SocialScreen() {
           </div>
         )}
       </section>
+
+      {historyTrades.length > 0 && (
+        <section className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
+          <h3 className="text-sm font-black text-[#F3F4F6]">
+            Historique ({historyTrades.length})
+          </h3>
+          <div className="space-y-3">
+            {historyPageItems.map((trade) => (
+              <TradeCard key={trade.id} trade={trade} />
+            ))}
+          </div>
+
+          {historyTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setHistoryPage((p) => Math.max(0, p - 1))}
+                disabled={historyPage === 0}
+                className="px-3.5 py-2 rounded-xl bg-[#181820] border border-white/[0.08] text-xs font-bold text-[#9CA3AF] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Précédent
+              </button>
+              <span className="text-xs font-bold text-[#9CA3AF]">
+                Page {historyPage + 1} / {historyTotalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setHistoryPage((p) => Math.min(historyTotalPages - 1, p + 1))
+                }
+                disabled={historyPage >= historyTotalPages - 1}
+                className="px-3.5 py-2 rounded-xl bg-[#181820] border border-white/[0.08] text-xs font-bold text-[#9CA3AF] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Suivant
+              </button>
+            </div>
+          )}
+        </section>
+      )}
 
       {tradeModalFriend && (
         <TradeProposalModal

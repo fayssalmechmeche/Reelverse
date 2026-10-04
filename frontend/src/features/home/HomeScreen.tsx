@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package, Clock, Film, ChevronRight, Repeat } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
@@ -44,6 +44,25 @@ export function HomeScreen() {
   const [lastDrawn, setLastDrawn] = useState<DrawnCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showReveal, setShowReveal] = useState(false);
+
+  // Countdown local, résynchronisé par le refetch périodique de usePackStock,
+  // pour que le timer avance en direct seconde par seconde au lieu de rester
+  // figé entre deux refetchs (toutes les 30s).
+  const [secondsLeft, setSecondsLeft] = useState(
+    packStock?.secondsToNextPack ?? 0,
+  );
+
+  useEffect(() => {
+    setSecondsLeft(packStock?.secondsToNextPack ?? 0);
+  }, [packStock?.secondsToNextPack]);
+
+  useEffect(() => {
+    if (!packStock || packStock.storedPacks >= packStock.maxStock) return;
+    const interval = setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [packStock]);
 
   const resolvedResults = useResolvedCards(
     (lastDrawn ?? []).map(
@@ -126,9 +145,7 @@ export function HomeScreen() {
                   MAX
                 </span>
               ) : (
-                <span>
-                  +1 dans {formatSecondsMMSS(packStock?.secondsToNextPack ?? 0)}
-                </span>
+                <span>+1 dans {formatSecondsMMSS(secondsLeft)}</span>
               )}
             </span>
           </div>
@@ -228,7 +245,7 @@ export function HomeScreen() {
                 ? "Ouverture..."
                 : canOpen
                   ? "Ouvrir le Pack (5 cartes)"
-                  : `Prochain dans ${formatSecondsMMSS(packStock?.secondsToNextPack ?? 0)}`}
+                  : `Prochain dans ${formatSecondsMMSS(secondsLeft)}`}
             </span>
           </button>
 
