@@ -353,7 +353,7 @@ export function HomeScreen() {
                 typeLabel={card.typeLabel}
                 rarity={card.rarity}
                 quantity={1}
-                isNew={true}
+                isNew={card.isNew}
                 onClick={() => goToDetail(card)}
                 compact={true}
               />
