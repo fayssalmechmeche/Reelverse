@@ -116,7 +116,7 @@ class TradingService
                     : $trade->getProposer();
 
                 $this->inventory->addCard($newOwner, $item->getCard(), 1);
-                $this->achievementChecker->onCardsObtained($newOwner, [$item->getCard()->getRarity()]);
+                $this->achievementChecker->onCardsObtained($newOwner, [$item->getCard()]);
             }
 
             $trade->setStatus(TradeStatus::ACCEPTED);

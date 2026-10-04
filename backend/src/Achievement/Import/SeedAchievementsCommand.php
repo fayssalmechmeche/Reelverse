@@ -26,6 +26,8 @@ class SeedAchievementsCommand extends Command
             ['code' => 'first_legendary', 'label' => 'Obtenir une carte Legendary', 'trigger' => AchievementTrigger::LEGENDARY_OBTAINED, 'threshold' => null, 'reward' => 500],
             ['code' => 'cards_10_day', 'label' => 'Obtenir 10 cartes en une journée', 'trigger' => AchievementTrigger::CARDS_OBTAINED_IN_DAY, 'threshold' => 10, 'reward' => 50],
             ['code' => 'cards_50_day', 'label' => 'Obtenir 50 cartes en une journée', 'trigger' => AchievementTrigger::CARDS_OBTAINED_IN_DAY, 'threshold' => 50, 'reward' => 300],
+            ['code' => 'collection_completed_1', 'label' => 'Compléter une collection à 100%', 'trigger' => AchievementTrigger::COLLECTION_COMPLETED, 'threshold' => 1, 'reward' => 150],
+            ['code' => 'collection_completed_3', 'label' => 'Compléter 3 collections à 100%', 'trigger' => AchievementTrigger::COLLECTION_COMPLETED, 'threshold' => 3, 'reward' => 600],
         ];
 
         $count = 0;

@@ -122,7 +122,7 @@ class MarketplaceService
 
             $listing->markAsSold();
             $this->inventory->addCard($buyer, $listing->getCard(), 1);
-            $this->achievementChecker->onCardsObtained($buyer, [$listing->getCard()->getRarity()]);
+            $this->achievementChecker->onCardsObtained($buyer, [$listing->getCard()]);
 
             $this->em->flush();
 

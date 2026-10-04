@@ -2,7 +2,9 @@
 
 namespace App\Achievement;
 
+use App\Card\Card;
 use App\Card\Rarity;
+use App\Collection\CollectionService;
 use App\Economy\Wallet\Wallet;
 use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -10,21 +12,32 @@ use App\Achievement\CardAcquisitionLog;
 
 class AchievementChecker
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private CollectionService $collectionService,
+    ) {}
 
     /**
      * À appeler chaque fois qu'un joueur obtient une ou plusieurs cartes (pack, shop, trade...).
      *
-     * @param Rarity[] $obtainedRarities raretés des cartes obtenues dans cette action
+     * @param Card[] $cards cartes obtenues dans cette action
      */
-    public function onCardsObtained(User $user, array $obtainedRarities): void
+    public function onCardsObtained(User $user, array $cards): void
     {
+        $obtainedRarities = array_map(fn(Card $c) => $c->getRarity(), $cards);
+
         if (in_array(Rarity::LEGENDARY, $obtainedRarities, true)) {
             $this->tryUnlock($user, AchievementTrigger::LEGENDARY_OBTAINED, null);
         }
 
         $cardsToday = $this->countCardsObtainedToday($user);
         $this->tryUnlockThresholds($user, AchievementTrigger::CARDS_OBTAINED_IN_DAY, $cardsToday);
+
+        foreach ($cards as $card) {
+            $this->collectionService->recordCompletionsForCard($user, $card);
+        }
+        $completedCollections = $this->collectionService->countCompletedCollections($user);
+        $this->tryUnlockThresholds($user, AchievementTrigger::COLLECTION_COMPLETED, $completedCollections);
     }
 
     private function tryUnlockThresholds(User $user, AchievementTrigger $trigger, int $currentValue): void

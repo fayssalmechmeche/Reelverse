@@ -278,4 +278,105 @@ class CollectionService
     {
         return $path ? self::TMDB_IMAGE_BASE . $path : null;
     }
+
+    /**
+     * À appeler chaque fois qu'un joueur obtient une carte : détermine quelle(s)
+     * collection(s) cette carte peut faire passer à 100%, et mémorise la
+     * complétion si c'est le cas (une seule fois par collection).
+     *
+     * - Carte MOVIE/SERIES : peut compléter la collection "acteur" de chaque
+     *   acteur ayant un personnage dans ce film/cette série.
+     * - Carte CHARACTER : peut compléter la collection "film"/"série" du
+     *   personnage (ses items sont les personnages, dont celui-ci).
+     * - Carte PERSON : n'entre dans aucune liste d'items de collection, donc
+     *   n'a aucun effet de complétion.
+     */
+    public function recordCompletionsForCard(User $user, Card $card): void
+    {
+        switch ($card->getType()) {
+            case CardType::MOVIE:
+                $movie = $this->em->getRepository(Movie::class)->find($card->getEntityId());
+                if ($movie) {
+                    foreach ($this->actorsAppearingIn($movie) as $person) {
+                        $this->recordIfComplete($user, 'person', $person->getId(), fn() => $this->getPersonCollection($user, $person));
+                    }
+                }
+                break;
+
+            case CardType::SERIES:
+                $series = $this->em->getRepository(Series::class)->find($card->getEntityId());
+                if ($series) {
+                    foreach ($this->actorsAppearingIn($series) as $person) {
+                        $this->recordIfComplete($user, 'person', $person->getId(), fn() => $this->getPersonCollection($user, $person));
+                    }
+                }
+                break;
+
+            case CardType::CHARACTER:
+                $character = $this->em->getRepository(Character::class)->find($card->getEntityId());
+                if ($character?->getMovie()) {
+                    $movie = $character->getMovie();
+                    $this->recordIfComplete($user, 'movie', $movie->getId(), fn() => $this->getMovieCollection($user, $movie));
+                }
+                if ($character?->getSeries()) {
+                    $series = $character->getSeries();
+                    $this->recordIfComplete($user, 'series', $series->getId(), fn() => $this->getSeriesCollection($user, $series));
+                }
+                break;
+
+            case CardType::PERSON:
+                // Aucun effet : les cartes PERSON ne sont jamais des items d'une collection.
+                break;
+        }
+    }
+
+    public function countCompletedCollections(User $user): int
+    {
+        return (int) $this->em->getRepository(UserCompletedCollection::class)->count(['user' => $user]);
+    }
+
+    /** @return Person[] */
+    private function actorsAppearingIn(Movie|Series $entity): array
+    {
+        $field = $entity instanceof Movie ? 'movie' : 'series';
+
+        $characters = $this->em->createQueryBuilder()
+            ->select('c', 'a')
+            ->from(Character::class, 'c')
+            ->leftJoin('c.actor', 'a')
+            ->where("c.$field = :entity")
+            ->setParameter('entity', $entity)
+            ->getQuery()
+            ->getResult();
+
+        $actors = [];
+        foreach ($characters as $character) {
+            if ($actor = $character->getActor()) {
+                $actors[$actor->getId()] = $actor;
+            }
+        }
+
+        return array_values($actors);
+    }
+
+    private function recordIfComplete(User $user, string $type, int $entityId, callable $resolveCollection): void
+    {
+        $already = $this->em->getRepository(UserCompletedCollection::class)->findOneBy([
+            'user' => $user,
+            'type' => $type,
+            'entityId' => $entityId,
+        ]);
+
+        if ($already) {
+            return;
+        }
+
+        $collection = $resolveCollection();
+        if ($collection['totalCount'] > 0 && $collection['ownedCount'] === $collection['totalCount']) {
+            $completed = new UserCompletedCollection();
+            $completed->setUser($user)->setType($type)->setEntityId($entityId);
+            $this->em->persist($completed);
+            $this->em->flush();
+        }
+    }
 }

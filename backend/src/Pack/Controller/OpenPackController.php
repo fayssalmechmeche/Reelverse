@@ -50,8 +50,7 @@ class OpenPackController
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
-        $rarities = array_map(fn($c) => $c->getRarity(), $cards);
-        $this->achievementChecker->onCardsObtained($user, $rarities);
+        $this->achievementChecker->onCardsObtained($user, $cards);
         $this->em->flush();
 
         return new JsonResponse([

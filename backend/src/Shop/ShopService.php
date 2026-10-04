@@ -37,7 +37,7 @@ class ShopService
 
         $shopCard->markAsSold();
         $this->inventory->addCard($user, $shopCard->getCard());
-        $this->achievementChecker->onCardsObtained($user, [$shopCard->getCard()->getRarity()]);
+        $this->achievementChecker->onCardsObtained($user, [$shopCard->getCard()]);
 
         $this->em->flush();
 
