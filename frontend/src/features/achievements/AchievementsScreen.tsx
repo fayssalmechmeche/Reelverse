@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAchievements } from "./useAchievements";
+import { useQuests, useClaimQuest, type QuestData } from "../quests/useQuests";
 
 type QuestTab = "ALL" | "DAILY" | "WEEKLY" | "ACHIEVEMENTS" | "COLLECTIONS";
 
@@ -29,6 +30,114 @@ function ComingSoon({ title }: { title: string }) {
       <p className="text-xs text-[#9CA3AF] max-w-sm">
         Bientôt disponible. Cette partie n'est pas encore branchée.
       </p>
+    </section>
+  );
+}
+
+function QuestRow({
+  quest,
+  onClaim,
+  isClaiming,
+}: {
+  quest: QuestData;
+  onClaim: () => void;
+  isClaiming: boolean;
+}) {
+  const pct = Math.min(100, Math.round((quest.progress / quest.target) * 100));
+
+  return (
+    <div className="p-3.5 rounded-xl bg-[#181820] border border-white/[0.06] space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-xs sm:text-sm font-bold text-[#F3F4F6]">
+            {quest.label}
+          </h3>
+          <p className="text-[11px] text-[#9CA3AF]">{quest.description}</p>
+        </div>
+
+        {quest.claimed ? (
+          <span className="px-2.5 py-1 rounded-lg bg-[#121217] text-[11px] font-bold text-[#9CA3AF] shrink-0">
+            Récupéré ✓
+          </span>
+        ) : quest.readyToClaim ? (
+          <button
+            type="button"
+            onClick={onClaim}
+            disabled={isClaiming}
+            className="px-3 py-1.5 rounded-xl bg-[#E50914] hover:bg-[#f6121d] text-white font-bold text-xs uppercase shrink-0 disabled:opacity-50"
+          >
+            Récupérer +{quest.coinsReward}
+          </button>
+        ) : (
+          <span className="text-xs font-bold text-[#F59E0B] shrink-0">
+            +{quest.coinsReward} Coins
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="w-full h-1.5 bg-[#121217] rounded-full overflow-hidden">
+          <div className="h-full bg-[#E50914]" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-[10px] font-bold text-[#9CA3AF] shrink-0">
+          {quest.progress}/{quest.target}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function QuestSection({
+  title,
+  period,
+}: {
+  title: string;
+  period: "daily" | "weekly";
+}) {
+  const { data: quests = [], isLoading, error } = useQuests();
+  const claimQuest = useClaimQuest();
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  const periodQuests = quests.filter((q) => q.period === period);
+
+  function handleClaim(questId: number) {
+    setClaimError(null);
+    claimQuest.mutate(questId, {
+      onError: (err: Error) => setClaimError(err.message),
+    });
+  }
+
+  return (
+    <section className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
+      <h2 className="text-sm font-black text-[#F3F4F6]">{title}</h2>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-[#9CA3AF] text-sm py-6 justify-center">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Chargement...</span>
+        </div>
+      ) : error ? (
+        <div className="p-3 rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 flex items-center gap-2 text-xs text-[#F3F4F6]">
+          <AlertCircle className="w-4 h-4 text-[#E50914] shrink-0" />
+          <span>Impossible de charger les quêtes.</span>
+        </div>
+      ) : periodQuests.length === 0 ? (
+        <p className="text-xs text-[#9CA3AF]">
+          Aucune quête disponible pour le moment.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {claimError && <p className="text-[#F87171] text-xs">{claimError}</p>}
+          {periodQuests.map((quest) => (
+            <QuestRow
+              key={quest.id}
+              quest={quest}
+              onClaim={() => handleClaim(quest.id)}
+              isClaiming={claimQuest.isPending}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -159,11 +268,11 @@ export function AchievementsScreen() {
 
       <div className="space-y-4">
         {(tab === "ALL" || tab === "DAILY") && (
-          <ComingSoon title="Quêtes Quotidiennes (24h)" />
+          <QuestSection title="Quêtes Quotidiennes (24h)" period="daily" />
         )}
 
         {(tab === "ALL" || tab === "WEEKLY") && (
-          <ComingSoon title="Quêtes Hebdomadaires (7j)" />
+          <QuestSection title="Quêtes Hebdomadaires (7j)" period="weekly" />
         )}
 
         {(tab === "ALL" || tab === "ACHIEVEMENTS") && achievementsSection}
