@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CinemaCard } from "../../components/CinemaCard";
 import {
@@ -37,6 +37,8 @@ const SUB_TABS: { id: SubTab; emoji: string; label: string }[] = [
   { id: "WISHLIST", emoji: "❤️", label: "Wishlist" },
   { id: "TRADELIST", emoji: "💰", label: "À échanger" },
 ];
+
+const PAGE_SIZE = 30;
 
 const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "ALL", label: "Tout" },
@@ -77,6 +79,7 @@ export function ProfileScreen() {
 
   const [subTab, setSubTab] = useState<SubTab>("OWNED");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
+  const [page, setPage] = useState(0);
 
   const [sellTarget, setSellTarget] = useState<ResolvedUserCard | null>(null);
   const [sellAmount, setSellAmount] = useState(1);
@@ -103,8 +106,27 @@ export function ProfileScreen() {
     });
   }, [inventory, typeFilter, subTab, wishlistedCardIds, saleListCardIds]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  // Revenir à la page 1 à chaque changement d'onglet/filtre, ou si la page
+  // courante dépasse le nombre de pages disponibles (ex: après une vente).
+  useEffect(() => {
+    setPage(0);
+  }, [subTab, typeFilter]);
+
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
+
+  const pageItems = useMemo(
+    () => filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
+    [filtered, page],
+  );
+
+  // On ne résout (nom/image/sous-titre) que les cartes de la page affichée,
+  // pour rester léger même avec des centaines/milliers de cartes en inventaire.
   const resolvedResults = useResolvedCards(
-    filtered.map(
+    pageItems.map(
       (c): CardRef => ({
         type: c.type,
         entityId: c.entityId,
@@ -115,7 +137,7 @@ export function ProfileScreen() {
 
   const cards: ResolvedUserCard[] = useMemo(
     () =>
-      filtered.map((c, idx) => {
+      pageItems.map((c, idx) => {
         const info = resolvedResults[idx]?.data;
         const meta = TYPE_META[c.type];
         return {
@@ -127,7 +149,7 @@ export function ProfileScreen() {
           typeLabel: meta.label,
         };
       }),
-    [filtered, resolvedResults],
+    [pageItems, resolvedResults],
   );
 
   function goToDetail(card: ResolvedUserCard) {
@@ -246,6 +268,30 @@ export function ProfileScreen() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-3.5 py-2 rounded-xl bg-[#121217] border border-white/[0.08] text-xs font-bold text-[#9CA3AF] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Précédent
+          </button>
+          <span className="text-xs font-bold text-[#9CA3AF]">
+            Page {page + 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            className="px-3.5 py-2 rounded-xl bg-[#121217] border border-white/[0.08] text-xs font-bold text-[#9CA3AF] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Suivant
+          </button>
         </div>
       )}
 
