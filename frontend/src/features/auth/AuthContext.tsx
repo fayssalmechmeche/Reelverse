@@ -9,6 +9,7 @@ import {
 interface Me {
   id: number;
   username: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthContextType {

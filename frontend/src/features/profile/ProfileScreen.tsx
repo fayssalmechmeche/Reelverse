@@ -7,6 +7,7 @@ import { AchievementsScreen } from "../achievements/AchievementsScreen";
 import { SocialScreen } from "../social/SocialScreen";
 import { SettingsTab } from "../settings/SettingsTab";
 import { VitrineTab } from "../collection/VitrineTab";
+import { Avatar } from "../../components/Avatar";
 
 type ProfileTab = "VITRINE" | "QUESTS" | "SOCIAL" | "SETTINGS";
 
@@ -64,9 +65,11 @@ export function ProfileScreen() {
     <div className="space-y-4">
       <section className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 sm:p-6 space-y-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-14 h-14 rounded-2xl bg-[#181820] border-2 border-[#E50914] flex items-center justify-center font-black text-xl text-[#F3F4F6] shrink-0">
-            {(me?.username ?? "").slice(0, 2).toUpperCase()}
-          </div>
+          <Avatar
+            src={me?.avatarUrl}
+            name={me?.username ?? ""}
+            className="w-14 h-14 text-xl"
+          />
           <div>
             <h1 className="text-lg sm:text-2xl font-black text-[#F3F4F6]">
               @{me?.username}

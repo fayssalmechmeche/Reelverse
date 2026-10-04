@@ -209,7 +209,7 @@ export function HomeScreen() {
             )}
           </div>
 
-          <div className="w-full max-w-xs space-y-1.5">
+          <div className="w-full max-w-xs space-y-1.5 mt-5">
             <div className="grid grid-cols-10 gap-1">
               {Array.from({ length: packStock?.maxStock ?? 10 }).map(
                 (_, idx) => {

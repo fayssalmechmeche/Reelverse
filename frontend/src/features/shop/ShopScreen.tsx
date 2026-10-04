@@ -72,9 +72,9 @@ export function ShopScreen() {
 
       {actionError && <p className="text-[#F87171] text-sm">{actionError}</p>}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
         {cards.map((card) => (
-          <div key={card.id} className="space-y-2">
+          <div key={card.id} className="space-y-1 sm:space-y-2">
             <div className={card.sold ? "opacity-40 pointer-events-none" : ""}>
               <CinemaCard
                 name={card.name}
@@ -90,11 +90,11 @@ export function ShopScreen() {
             </div>
 
             {!card.sold && (
-              <div className="flex gap-1.5">
+              <div className="flex gap-1 sm:gap-1.5">
                 <button
                   onClick={() => run(buyCard.mutateAsync(card.id))}
                   disabled={buyCard.isPending}
-                  className="flex-1 px-2 py-1.5 rounded-lg bg-[#E50914] hover:bg-[#f6121d] text-white text-[11px] font-black uppercase tracking-wide disabled:opacity-50"
+                  className="flex-1 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg bg-[#E50914] hover:bg-[#f6121d] text-white text-[9px] sm:text-[11px] font-black uppercase tracking-wide disabled:opacity-50"
                 >
                   {card.price} Coins
                 </button>
@@ -102,7 +102,7 @@ export function ShopScreen() {
                   <button
                     onClick={() => run(refreshCard.mutateAsync(card.id))}
                     disabled={refreshCard.isPending}
-                    className="px-2 py-1.5 rounded-lg bg-[#22222C] hover:bg-[#2A2A36] text-[#9CA3AF] text-[11px] font-bold disabled:opacity-50"
+                    className="px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg bg-[#22222C] hover:bg-[#2A2A36] text-[#9CA3AF] text-[9px] sm:text-[11px] font-bold disabled:opacity-50"
                   >
                     ↻
                   </button>
@@ -111,7 +111,7 @@ export function ShopScreen() {
             )}
 
             {card.sold && (
-              <p className="text-center text-[10px] text-[#71717A] font-semibold uppercase">
+              <p className="text-center text-[9px] sm:text-[10px] text-[#71717A] font-semibold uppercase">
                 Vendue
               </p>
             )}
