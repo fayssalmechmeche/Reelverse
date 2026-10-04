@@ -12,6 +12,7 @@ import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { MarketplaceScreen } from "./features/marketplace/MarketplaceScreen";
 import { SocialScreen } from "./features/social/SocialScreen";
 import { AchievementsScreen } from "./features/achievements/AchievementsScreen";
+import { PlayerProfileScreen } from "./features/playerProfile/PlayerProfileScreen";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -99,6 +100,14 @@ function App() {
             element={
               <AppShell>
                 <AchievementsScreen />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/players/:id"
+            element={
+              <AppShell>
+                <PlayerProfileScreen />
               </AppShell>
             }
           />

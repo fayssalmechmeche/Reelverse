@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   UserPlus,
   UserCheck,
@@ -50,6 +51,7 @@ const FRIENDS_PAGE_SIZE = 10;
 const HISTORY_PAGE_SIZE = 10;
 
 export function SocialScreen() {
+  const navigate = useNavigate();
   const { data: me } = useMe();
   const { data, isLoading } = useFriendsData();
   const { data: blocked = [] } = useBlockedUsers();
@@ -189,16 +191,22 @@ export function SocialScreen() {
       trade.proposerId === myId
         ? trade.recipientUsername
         : trade.proposerUsername;
+    const otherUserId =
+      trade.proposerId === myId ? trade.recipientId : trade.proposerId;
 
     return (
       <div className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate(`/players/${otherUserId}`)}
+            className="flex items-center gap-2.5 text-left hover:opacity-80"
+          >
             <div className="w-9 h-9 rounded-xl bg-[#22222C] border border-[#E50914]/25 flex items-center justify-center font-black text-xs text-[#F3F4F6]">
               {otherUsername.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <div className="text-sm font-bold text-[#F3F4F6]">
+              <div className="text-sm font-bold text-[#F3F4F6] hover:text-[#E50914] hover:underline">
                 Avec @{otherUsername}
               </div>
               <div className="text-[10px] text-[#9CA3AF]">
@@ -207,7 +215,7 @@ export function SocialScreen() {
                   : "Reçu de ce joueur"}
               </div>
             </div>
-          </div>
+          </button>
           <span
             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border ${STATUS_STYLE[trade.status]}`}
           >
@@ -409,9 +417,13 @@ export function SocialScreen() {
                 key={r.id}
                 className="flex items-center justify-between bg-[#181820] rounded-xl p-3"
               >
-                <span className="text-sm font-bold text-[#F3F4F6]">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/players/${r.id}`)}
+                  className="text-sm font-bold text-[#F3F4F6] hover:text-[#E50914] hover:underline"
+                >
                   @{r.username}
-                </span>
+                </button>
                 <button
                   onClick={() =>
                     run(sendRequest.mutateAsync(r.id), () => {
@@ -503,19 +515,23 @@ export function SocialScreen() {
                 key={f.id}
                 className="p-3.5 rounded-xl bg-[#181820] border border-white/[0.06] flex flex-wrap items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/players/${f.userId}`)}
+                  className="flex items-center gap-3 text-left hover:opacity-80"
+                >
                   <div className="w-10 h-10 rounded-xl bg-[#22222C] border border-white/10 flex items-center justify-center font-black text-xs text-[#F3F4F6]">
                     {f.username.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-[#F3F4F6]">
+                    <div className="font-bold text-sm text-[#F3F4F6] hover:text-[#E50914] hover:underline">
                       @{f.username}
                     </div>
                     <div className="text-[11px] text-[#9CA3AF]">
                       Ami • Échanges débloqués (validité 48h)
                     </div>
                   </div>
-                </div>
+                </button>
 
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
