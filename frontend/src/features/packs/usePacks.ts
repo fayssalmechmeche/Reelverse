@@ -45,6 +45,7 @@ export function useOpenPack() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
       qc.invalidateQueries({ queryKey: ["packStock"] });
     },
   });

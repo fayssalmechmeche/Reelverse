@@ -80,6 +80,9 @@ class CollectionService
                     'id' => $person->getId(),
                     'name' => $person->getName(),
                     'imageUrl' => $this->image($person->getProfilePath()),
+                    'typeEmoji' => '👤',
+                    'typeLabel' => 'Acteur',
+                    'subtitle' => 'Acteur',
                 ],
                 $this->resolveSelfCard($user, CardType::PERSON, $person->getId()),
             ),
@@ -106,6 +109,9 @@ class CollectionService
                     'id' => $movie->getId(),
                     'name' => $movie->getTitle(),
                     'imageUrl' => $this->image($movie->getPosterPath()),
+                    'typeEmoji' => '🎬',
+                    'typeLabel' => 'Film',
+                    'subtitle' => 'Film' . ($movie->getReleaseDate() ? ' • ' . $movie->getReleaseDate()->format('Y') : ''),
                 ],
                 $this->resolveSelfCard($user, CardType::MOVIE, $movie->getId()),
             ),
@@ -132,6 +138,9 @@ class CollectionService
                     'id' => $series->getId(),
                     'name' => $series->getName(),
                     'imageUrl' => $this->image($series->getPosterPath()),
+                    'typeEmoji' => '📺',
+                    'typeLabel' => 'Série',
+                    'subtitle' => 'Série' . ($series->getFirstAirDate() ? ' • ' . $series->getFirstAirDate()->format('Y') : ''),
                 ],
                 $this->resolveSelfCard($user, CardType::SERIES, $series->getId()),
             ),
@@ -245,9 +254,10 @@ class CollectionService
 
     /**
      * Résout la carte (rareté + possession) de l'entité elle-même, pour
-     * l'afficher en en-tête de la page de collection.
+     * l'afficher en en-tête de la page de collection avec ses actions
+     * (wishlist, à échanger, marché, vente rapide).
      *
-     * @return array{rarity: ?string, owned: bool, quantity: int}
+     * @return array{cardId: ?int, userCardId: ?int, rarity: ?string, owned: bool, quantity: int}
      */
     private function resolveSelfCard(User $user, CardType $type, int $entityId): array
     {
@@ -257,7 +267,7 @@ class CollectionService
         ]);
 
         if (!$card) {
-            return ['rarity' => null, 'owned' => false, 'quantity' => 0];
+            return ['cardId' => null, 'userCardId' => null, 'rarity' => null, 'owned' => false, 'quantity' => 0];
         }
 
         $userCard = $this->em->getRepository(UserCard::class)->findOneBy([
@@ -268,6 +278,8 @@ class CollectionService
         $quantity = $userCard?->getQuantity() ?? 0;
 
         return [
+            'cardId' => $card->getId(),
+            'userCardId' => $userCard?->getId(),
             'rarity' => $card->getRarity()->value,
             'owned' => $quantity > 0,
             'quantity' => $quantity,

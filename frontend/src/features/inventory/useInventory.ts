@@ -37,6 +37,7 @@ export function useSellCard() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inventory"] });
+      qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
       qc.invalidateQueries({ queryKey: ["me"] });
     },
   });

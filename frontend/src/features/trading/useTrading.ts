@@ -45,6 +45,7 @@ export function useTrades() {
 function invalidateTrades(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["trades"] });
   qc.invalidateQueries({ queryKey: ["inventory"] });
+  qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
 }
 
 export function useProposeTrade() {

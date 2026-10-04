@@ -28,6 +28,7 @@ export function useMarketplaceListings() {
 function invalidateAfterTrade(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["marketplace", "listings"] });
   qc.invalidateQueries({ queryKey: ["inventory"] });
+  qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
 }
 
 export function useCreateListing() {

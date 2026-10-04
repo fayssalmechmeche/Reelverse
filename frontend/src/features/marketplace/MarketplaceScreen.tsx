@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Tag,
   Plus,
@@ -22,7 +22,6 @@ import {
   useCreateListing,
   useBuyListing,
   useCancelListing,
-  type ListingData,
 } from "./useMarketplace";
 import type { RarityKey } from "../../design/rarity";
 
@@ -44,7 +43,7 @@ const RARITY_ORDER: RarityKey[] = [
 ];
 
 export function MarketplaceScreen() {
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: me } = useMe();
   const { data: listings = [], isLoading: listingsLoading } =
     useMarketplaceListings();
@@ -69,6 +68,28 @@ export function MarketplaceScreen() {
   const [sellPrice, setSellPrice] = useState(100);
 
   const myId = me?.id ?? null;
+
+  // Arrivée depuis "Voir sur le Marché" / "Vendre sur le Marché" d'une page
+  // de détail (Acteur/Film/Série) : préremplit la recherche pour afficher
+  // directement cette carte dans la liste, ou ouvre le formulaire de mise
+  // en vente prérempli.
+  useEffect(() => {
+    const searchTerm = searchParams.get("search");
+    const sellTargetCardId = searchParams.get("sell");
+
+    if (searchTerm) {
+      setSubTab("BROWSE");
+      setSearch(searchTerm);
+    }
+    if (sellTargetCardId) {
+      openSellModal(Number(sellTargetCardId));
+    }
+
+    if (searchTerm || sellTargetCardId) {
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fusionne chaque annonce avec ses infos résolues (nom/image), dans le même ordre
   const resolvedListings = useMemo(() => {

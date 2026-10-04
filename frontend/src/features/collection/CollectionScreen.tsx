@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search, ArrowUpDown, Eye, EyeOff } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
 import {
-  useInventory,
-  useSellCard,
-  type InventoryCard,
-} from "../inventory/useInventory";
+  useCardsCatalog,
+  type CatalogCard,
+} from "../inventory/useCardsCatalog";
+import { QuickSellModal } from "../inventory/QuickSellModal";
 import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
+import { RARITY_CONFIG, type RarityKey } from "../../design/rarity";
 import {
   useWishlist,
   useAddToWishlist,
@@ -18,21 +20,29 @@ import {
   useRemoveFromSaleList,
 } from "../wishlist/useSaleList";
 
-const TYPE_META: Record<
-  InventoryCard["type"],
-  { emoji: string; label: string }
-> = {
-  person: { emoji: "👤", label: "Acteur" },
-  movie: { emoji: "🎬", label: "Film" },
-  series: { emoji: "📺", label: "Série" },
-  character: { emoji: "🎭", label: "Personnage" },
-};
+const TYPE_META: Record<CatalogCard["type"], { emoji: string; label: string }> =
+  {
+    person: { emoji: "👤", label: "Acteur" },
+    movie: { emoji: "🎬", label: "Film" },
+    series: { emoji: "📺", label: "Série" },
+    character: { emoji: "🎭", label: "Personnage" },
+  };
 
-type SubTab = "OWNED" | "DUPLICATES" | "WISHLIST" | "TRADELIST";
-type TypeFilter = "ALL" | InventoryCard["type"];
+type SubTab =
+  | "ALL"
+  | "OWNED"
+  | "MISSING"
+  | "DUPLICATES"
+  | "WISHLIST"
+  | "TRADELIST";
+type TypeFilter = "ALL" | CatalogCard["type"];
+type RarityFilter = "ALL" | RarityKey;
+type SortBy = "OWNED_FIRST" | "NAME_ASC" | "RARITY_DESC";
 
 const SUB_TABS: { id: SubTab; emoji: string; label: string }[] = [
+  { id: "ALL", emoji: "🗂️", label: "Toutes" },
   { id: "OWNED", emoji: "🃏", label: "Possédées" },
+  { id: "MISSING", emoji: "❓", label: "Manquantes" },
   { id: "DUPLICATES", emoji: "🔄", label: "Doublons" },
   { id: "WISHLIST", emoji: "❤️", label: "Wishlist" },
   { id: "TRADELIST", emoji: "💰", label: "À échanger" },
@@ -48,7 +58,24 @@ const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: "character", label: "🎭 Personnages" },
 ];
 
-interface ResolvedUserCard extends InventoryCard {
+const RARITY_FILTERS: { id: RarityFilter; label: string }[] = [
+  { id: "ALL", label: "Toutes raretés" },
+  { id: "common", label: RARITY_CONFIG.common.label },
+  { id: "uncommon", label: RARITY_CONFIG.uncommon.label },
+  { id: "rare", label: RARITY_CONFIG.rare.label },
+  { id: "epic", label: RARITY_CONFIG.epic.label },
+  { id: "legendary", label: RARITY_CONFIG.legendary.label },
+];
+
+const RARITY_ORDER: RarityKey[] = [
+  "legendary",
+  "epic",
+  "rare",
+  "uncommon",
+  "common",
+];
+
+interface ResolvedCatalogCard extends CatalogCard {
   name: string;
   subtitle: string;
   imageUrl: string | null;
@@ -58,8 +85,7 @@ interface ResolvedUserCard extends InventoryCard {
 
 export function CollectionScreen() {
   const navigate = useNavigate();
-  const { data: inventory = [], isLoading } = useInventory();
-  const sellCard = useSellCard();
+  const { data: catalog = [], isLoading } = useCardsCatalog();
 
   const { data: wishlist = [] } = useWishlist();
   const addToWishlist = useAddToWishlist();
@@ -77,56 +103,23 @@ export function CollectionScreen() {
     [saleList],
   );
 
-  const [subTab, setSubTab] = useState<SubTab>("OWNED");
+  const [subTab, setSubTab] = useState<SubTab>("ALL");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
+  const [rarityFilter, setRarityFilter] = useState<RarityFilter>("ALL");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>("OWNED_FIRST");
+  const [hideMissing, setHideMissing] = useState(false);
   const [page, setPage] = useState(0);
 
-  const [sellTarget, setSellTarget] = useState<ResolvedUserCard | null>(null);
-  const [sellAmount, setSellAmount] = useState(1);
-  const [actionError, setActionError] = useState<string | null>(null);
-
-  const counts = useMemo(
-    () => ({
-      OWNED: inventory.filter((c) => c.quantity > 0).length,
-      DUPLICATES: inventory.filter((c) => c.quantity >= 2).length,
-      WISHLIST: wishlistedCardIds.size,
-      TRADELIST: saleListCardIds.size,
-    }),
-    [inventory, wishlistedCardIds, saleListCardIds],
+  const [sellTarget, setSellTarget] = useState<ResolvedCatalogCard | null>(
+    null,
   );
 
-  const filtered = useMemo(() => {
-    return inventory.filter((c) => {
-      if (typeFilter !== "ALL" && c.type !== typeFilter) return false;
-      if (subTab === "OWNED") return c.quantity > 0;
-      if (subTab === "DUPLICATES") return c.quantity >= 2;
-      if (subTab === "WISHLIST") return wishlistedCardIds.has(c.cardId);
-      if (subTab === "TRADELIST") return saleListCardIds.has(c.cardId);
-      return true;
-    });
-  }, [inventory, typeFilter, subTab, wishlistedCardIds, saleListCardIds]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  // Revenir à la page 1 à chaque changement d'onglet/filtre, ou si la page
-  // courante dépasse le nombre de pages disponibles (ex: après une vente).
-  useEffect(() => {
-    setPage(0);
-  }, [subTab, typeFilter]);
-
-  useEffect(() => {
-    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
-  }, [page, totalPages]);
-
-  const pageItems = useMemo(
-    () => filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
-    [filtered, page],
-  );
-
-  // On ne résout (nom/image/sous-titre) que les cartes de la page affichée,
-  // pour rester léger même avec des centaines/milliers de cartes en inventaire.
+  // Résout nom/image/sous-titre de TOUT le catalogue en un seul appel réseau
+  // (les appels sont fusionnés en un batch, voir resolveCard.ts), pour
+  // pouvoir chercher/trier sur le nom avant la pagination.
   const resolvedResults = useResolvedCards(
-    pageItems.map(
+    catalog.map(
       (c): CardRef => ({
         type: c.type,
         entityId: c.entityId,
@@ -135,9 +128,9 @@ export function CollectionScreen() {
     ),
   );
 
-  const cards: ResolvedUserCard[] = useMemo(
+  const allCards: ResolvedCatalogCard[] = useMemo(
     () =>
-      pageItems.map((c, idx) => {
+      catalog.map((c, idx) => {
         const info = resolvedResults[idx]?.data;
         const meta = TYPE_META[c.type];
         return {
@@ -149,10 +142,87 @@ export function CollectionScreen() {
           typeLabel: meta.label,
         };
       }),
-    [pageItems, resolvedResults],
+    [catalog, resolvedResults],
   );
 
-  function goToDetail(card: ResolvedUserCard) {
+  const ownedCount = useMemo(
+    () => catalog.filter((c) => c.quantity > 0).length,
+    [catalog],
+  );
+  const totalCount = catalog.length;
+  const overallPct =
+    totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
+
+  const counts = useMemo(
+    () => ({
+      ALL: catalog.length,
+      OWNED: ownedCount,
+      MISSING: catalog.length - ownedCount,
+      DUPLICATES: catalog.filter((c) => c.quantity >= 2).length,
+      WISHLIST: wishlistedCardIds.size,
+      TRADELIST: saleListCardIds.size,
+    }),
+    [catalog, ownedCount, wishlistedCardIds, saleListCardIds],
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    const result = allCards.filter((c) => {
+      if (typeFilter !== "ALL" && c.type !== typeFilter) return false;
+      if (rarityFilter !== "ALL" && c.rarity !== rarityFilter) return false;
+      if (hideMissing && c.quantity === 0) return false;
+      if (subTab === "OWNED" && c.quantity === 0) return false;
+      if (subTab === "MISSING" && c.quantity > 0) return false;
+      if (subTab === "DUPLICATES" && c.quantity < 2) return false;
+      if (subTab === "WISHLIST" && !wishlistedCardIds.has(c.cardId))
+        return false;
+      if (subTab === "TRADELIST" && !saleListCardIds.has(c.cardId))
+        return false;
+      if (q && !c.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    return [...result].sort((a, b) => {
+      if (sortBy === "NAME_ASC") return a.name.localeCompare(b.name);
+      if (sortBy === "RARITY_DESC")
+        return RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity);
+      // OWNED_FIRST (par défaut)
+      return (
+        (b.quantity > 0 ? 1 : 0) - (a.quantity > 0 ? 1 : 0) ||
+        a.name.localeCompare(b.name)
+      );
+    });
+  }, [
+    allCards,
+    typeFilter,
+    rarityFilter,
+    hideMissing,
+    subTab,
+    search,
+    sortBy,
+    wishlistedCardIds,
+    saleListCardIds,
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  // Revenir à la page 1 à chaque changement de filtre, ou si la page
+  // courante dépasse le nombre de pages disponibles (ex: après une vente).
+  useEffect(() => {
+    setPage(0);
+  }, [subTab, typeFilter, rarityFilter, search, hideMissing]);
+
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
+  }, [page, totalPages]);
+
+  const cards = useMemo(
+    () => filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
+    [filtered, page],
+  );
+
+  function goToDetail(card: ResolvedCatalogCard) {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
@@ -174,22 +244,9 @@ export function CollectionScreen() {
     }
   }
 
-  function openSellModal(card: ResolvedUserCard) {
-    setSellAmount(1);
-    setActionError(null);
+  function openSellModal(card: ResolvedCatalogCard) {
+    if (card.id === null) return;
     setSellTarget(card);
-  }
-
-  function confirmSell() {
-    if (!sellTarget) return;
-    setActionError(null);
-    sellCard.mutate(
-      { id: sellTarget.id, quantity: sellAmount },
-      {
-        onSuccess: () => setSellTarget(null),
-        onError: (err: Error) => setActionError(err.message),
-      },
-    );
   }
 
   if (isLoading)
@@ -197,7 +254,75 @@ export function CollectionScreen() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-black text-[#F3F4F6]">Ma Collection</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-xl font-black text-[#F3F4F6]">Ma Collection</h2>
+            <span className="px-2.5 py-1 rounded-full bg-[#181820] border border-white/10 text-xs font-bold text-[#F3F4F6]">
+              {ownedCount} / {totalCount}
+            </span>
+          </div>
+          <p className="text-xs text-[#9CA3AF] mt-0.5">
+            Touchez une carte pour ouvrir sa collection liée.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+          <div className="relative flex-1 sm:w-64 min-w-[160px]">
+            <Search className="w-4 h-4 text-[#9CA3AF] absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Rechercher une carte..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#181820] border border-white/10 text-xs text-[#F3F4F6] placeholder-[#9CA3AF] focus:outline-none focus:border-[#E50914]"
+            />
+          </div>
+
+          <div className="flex items-center bg-[#181820] border border-white/10 rounded-xl px-3 py-2 text-xs text-[#F3F4F6]">
+            <ArrowUpDown className="w-3.5 h-3.5 text-[#9CA3AF] mr-1.5 shrink-0" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="bg-transparent text-xs font-semibold text-[#F3F4F6] focus:outline-none cursor-pointer"
+            >
+              <option value="OWNED_FIRST" className="bg-[#181820]">
+                Possédées d'abord
+              </option>
+              <option value="NAME_ASC" className="bg-[#181820]">
+                Nom (A-Z)
+              </option>
+              <option value="RARITY_DESC" className="bg-[#181820]">
+                Rareté (Légendaire ↓)
+              </option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setHideMissing((p) => !p)}
+            className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all ${
+              hideMissing
+                ? "bg-[#F59E0B]/20 border-[#F59E0B] text-[#FBBF24]"
+                : "bg-[#181820] border-white/10 text-[#9CA3AF] hover:text-white"
+            }`}
+          >
+            {hideMissing ? (
+              <EyeOff className="w-3.5 h-3.5" />
+            ) : (
+              <Eye className="w-3.5 h-3.5" />
+            )}
+            <span>Masquer manquantes</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="w-full h-1.5 bg-[#181820] rounded-full overflow-hidden">
+        <div
+          className={`h-full ${overallPct >= 100 ? "bg-[#F59E0B]" : "bg-[#E50914]"}`}
+          style={{ width: `${overallPct}%` }}
+        />
+      </div>
 
       <div className="rounded-2xl bg-[#121217] border border-white/[0.08] p-3.5 space-y-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
@@ -233,6 +358,26 @@ export function CollectionScreen() {
             </button>
           ))}
         </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-white/[0.06] pb-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF] mr-1 shrink-0">
+            Rareté
+          </span>
+          {RARITY_FILTERS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setRarityFilter(r.id)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border capitalize ${
+                rarityFilter === r.id
+                  ? "bg-[#22222C] text-[#F3F4F6] border-white/25"
+                  : "bg-[#181820]/60 text-[#9CA3AF] border-transparent hover:text-white"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {cards.length === 0 ? (
@@ -242,7 +387,7 @@ export function CollectionScreen() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           {cards.map((card) => (
-            <div key={card.id} className="space-y-2">
+            <div key={card.cardId} className="space-y-2">
               <CinemaCard
                 name={card.name}
                 subtitle={card.subtitle}
@@ -295,78 +440,15 @@ export function CollectionScreen() {
         </div>
       )}
 
-      {sellTarget && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-2xl bg-[#121217] border border-white/15 p-5 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase text-[#F59E0B]">
-                  Vente rapide • 0% Taxe
-                </span>
-                <h3 className="text-lg font-black text-[#F3F4F6]">
-                  Vendre {sellTarget.name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSellTarget(null)}
-                className="text-[#9CA3AF] hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-[#9CA3AF]">
-              Vous possédez{" "}
-              <strong className="text-white">×{sellTarget.quantity}</strong>{" "}
-              copie(s).
-            </p>
-
-            <div className="flex items-center justify-between bg-[#181820] p-3.5 rounded-xl border border-white/10">
-              <span className="text-xs font-semibold text-[#9CA3AF]">
-                Quantité à vendre
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSellAmount((q) => Math.max(1, q - 1))}
-                  className="w-7 h-7 rounded-lg bg-[#22222C] font-bold text-white"
-                >
-                  -
-                </button>
-                <span className="font-black text-sm w-6 text-center">
-                  {sellAmount}
-                </span>
-                <button
-                  onClick={() =>
-                    setSellAmount((q) => Math.min(sellTarget.quantity, q + 1))
-                  }
-                  className="w-7 h-7 rounded-lg bg-[#22222C] font-bold text-white"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {actionError && (
-              <p className="text-[#F87171] text-sm">{actionError}</p>
-            )}
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={() => setSellTarget(null)}
-                className="px-4 py-2 rounded-xl bg-[#181820] text-xs font-bold text-[#9CA3AF]"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={confirmSell}
-                disabled={sellCard.isPending}
-                className="px-4 py-2 rounded-xl bg-[#E50914] text-white text-xs font-black uppercase disabled:opacity-50"
-              >
-                Vendre
-              </button>
-            </div>
-          </div>
-        </div>
+      {sellTarget && sellTarget.id !== null && (
+        <QuickSellModal
+          target={{
+            id: sellTarget.id,
+            name: sellTarget.name,
+            quantity: sellTarget.quantity,
+          }}
+          onClose={() => setSellTarget(null)}
+        />
       )}
     </div>
   );

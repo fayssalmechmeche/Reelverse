@@ -6,7 +6,6 @@ import {
   Ban,
   AlertCircle,
   Loader2,
-  Users,
   Repeat,
   ArrowRight,
   Clock,
@@ -343,19 +342,6 @@ export function SocialScreen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#E50914]/15 border border-[#E50914]/30 flex items-center justify-center">
-          <Users className="w-5 h-5 text-[#E50914]" />
-        </div>
-        <div>
-          <h2 className="text-xl font-black text-[#F3F4F6]">Amis & Social</h2>
-          <p className="text-[11px] text-[#9CA3AF]">
-            Les échanges de cartes sont autorisés uniquement avec vos amis •
-            valable 48h, 0 Coin.
-          </p>
-        </div>
-      </div>
-
       {error && (
         <div className="p-3 rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 flex items-center gap-2 text-xs text-[#F3F4F6]">
           <AlertCircle className="w-4 h-4 text-[#E50914] shrink-0" />

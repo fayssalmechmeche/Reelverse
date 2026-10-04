@@ -9,6 +9,11 @@ export interface CollectionEntity {
   id: number;
   name: string;
   imageUrl: string | null;
+  typeEmoji: string;
+  typeLabel: string;
+  subtitle: string;
+  cardId: number | null;
+  userCardId: number | null;
   rarity: RarityKey | null;
   owned: boolean;
   quantity: number;
