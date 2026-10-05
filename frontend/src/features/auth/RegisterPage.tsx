@@ -2,19 +2,28 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, KeyRound, User, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { AuthLayout } from "./AuthLayout";
+import { useAuth } from "./AuthContext";
 
 export function RegisterPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { refresh } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -22,7 +31,11 @@ export function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, username, password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          username: username.trim(),
+          password,
+        }),
       });
 
       if (!res.ok) {
@@ -31,7 +44,20 @@ export function RegisterPage() {
         return;
       }
 
-      navigate("/login");
+      // Compte créé : on connecte directement l'utilisateur.
+      const loginRes = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      if (loginRes.ok) {
+        await refresh();
+        navigate("/");
+      } else {
+        navigate("/login");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -131,6 +157,24 @@ export function RegisterPage() {
                 <Eye className="w-4 h-4" />
               )}
             </button>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-[#9CA3AF]">
+            Confirmer le mot de passe
+          </label>
+          <div className="relative">
+            <KeyRound className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Retapez le mot de passe"
+              required
+              minLength={8}
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#181820] border border-white/10 text-xs text-[#F3F4F6] placeholder-[#9CA3AF]/50 focus:outline-none focus:border-[#E50914]"
+            />
           </div>
         </div>
 

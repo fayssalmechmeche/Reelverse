@@ -154,9 +154,7 @@ export function SettingsTab() {
 
         <form onSubmit={handleUsernameSubmit} className="space-y-3 max-w-md">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-[#9CA3AF]">
-              Pseudo
-            </label>
+            <label className="text-[11px] font-bold text-[#9CA3AF]">Pseudo</label>
             <input
               type="text"
               value={username}
@@ -223,7 +221,7 @@ export function SettingsTab() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               className="w-full px-3.5 py-2.5 rounded-xl bg-[#181820] border border-white/10 text-xs text-[#F3F4F6] placeholder-[#9CA3AF] focus:outline-none focus:border-[#E50914]"
             />
           </div>
@@ -237,7 +235,7 @@ export function SettingsTab() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               className="w-full px-3.5 py-2.5 rounded-xl bg-[#181820] border border-white/10 text-xs text-[#F3F4F6] placeholder-[#9CA3AF] focus:outline-none focus:border-[#E50914]"
             />
           </div>
@@ -261,9 +259,7 @@ export function SettingsTab() {
             disabled={changePassword.isPending}
             className="px-4 py-2.5 rounded-xl bg-[#E50914] hover:bg-[#f6121d] border-b-2 border-red-950 text-white text-xs font-black uppercase tracking-wider disabled:opacity-50"
           >
-            {changePassword.isPending
-              ? "Mise à jour..."
-              : "Mettre à jour le mot de passe"}
+            {changePassword.isPending ? "Mise à jour..." : "Mettre à jour le mot de passe"}
           </button>
         </form>
       </section>

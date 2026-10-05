@@ -2,14 +2,15 @@
 
 namespace App\User\Controller;
 
+use App\User\Dto\RegisterRequest;
 use App\User\User;
+use App\User\UserOnboarding;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use App\User\UserOnboarding;
 
 #[AsController]
 class RegisterController
@@ -21,28 +22,12 @@ class RegisterController
     ) {}
 
     #[Route('/api/register', name: 'api_register', methods: ['POST'])]
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(#[MapRequestPayload] RegisterRequest $dto): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        if (empty($data['email']) || empty($data['username']) || empty($data['password'])) {
-            return new JsonResponse(['error' => 'Email, pseudo et mot de passe requis.'], 400);
-        }
-
-        $existingEmail = $this->em->getRepository(User::class)->findOneBy(['email' => $data['email']]);
-        if ($existingEmail) {
-            return new JsonResponse(['error' => 'Cet email est déjà utilisé.'], 409);
-        }
-
-        $existingUsername = $this->em->getRepository(User::class)->findOneBy(['username' => $data['username']]);
-        if ($existingUsername) {
-            return new JsonResponse(['error' => 'Ce pseudo est déjà pris.'], 409);
-        }
-
         $user = new User();
-        $user->setEmail($data['email']);
-        $user->setPseudo($data['username']);
-        $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
+        $user->setEmail($dto->email);
+        $user->setPseudo($dto->username);
+        $user->setPassword($this->passwordHasher->hashPassword($user, $dto->password));
 
         $this->em->persist($user);
         $this->onboarding->setupNewUser($user);

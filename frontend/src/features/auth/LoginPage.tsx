@@ -23,8 +23,16 @@ export function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
+
+      if (res.status === 429) {
+        const data = await res.json().catch(() => null);
+        setError(
+          data?.error ?? "Trop de tentatives de connexion. Réessayez plus tard.",
+        );
+        return;
+      }
 
       if (!res.ok) {
         setError("Email ou mot de passe incorrect.");
