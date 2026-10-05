@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Layers, Trophy, Users, Settings } from "lucide-react";
 import { useMe } from "../auth/useMe";
 import { useFriendsData } from "../social/useFriends";
+import { useClaimableRewards } from "../quests/useClaimableRewards";
 import { AchievementsScreen } from "../achievements/AchievementsScreen";
 import { SocialScreen } from "../social/SocialScreen";
 import { SettingsTab } from "../settings/SettingsTab";
@@ -42,6 +43,7 @@ export function ProfileScreen() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const incomingCount = friendsData?.incoming.length ?? 0;
+  const rewardsCount = useClaimableRewards();
 
   const tabParam = searchParams.get("tab") ?? "";
   const [tab, setTab] = useState<ProfileTab>(
@@ -84,7 +86,9 @@ export function ProfileScreen() {
             const badge =
               t.id === "SOCIAL" && incomingCount > 0
                 ? `${incomingCount}`
-                : null;
+                : t.id === "QUESTS" && rewardsCount > 0
+                  ? `${rewardsCount}`
+                  : null;
             return (
               <button
                 key={t.id}

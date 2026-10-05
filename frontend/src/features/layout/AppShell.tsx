@@ -14,6 +14,8 @@ import { useAuth } from "../auth/AuthContext";
 import { useMe } from "../auth/useMe";
 import { usePackStock } from "../packs/usePacks";
 import { useFriendsData } from "../social/useFriends";
+import { DailyRewardPopup } from "../loginStreak/DailyRewardPopup";
+import { useClaimableRewards } from "../quests/useClaimableRewards";
 
 function formatSecondsMMSS(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -40,6 +42,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const incomingCount = friendsData?.incoming.length ?? 0;
 
+  // Récompenses à récupérer (connexion quotidienne + quêtes terminées)
+  const rewardsCount = useClaimableRewards();
+
   // Countdown local, resynchronisé par le refetch périodique de usePackStock
   const [secondsLeft, setSecondsLeft] = useState(
     packStock?.secondsToNextPack ?? 0,
@@ -58,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [packStock]);
 
   return (
-    <div className="bg-[#0B0B0E] min-h-screen text-white pb-16 md:pb-0">
+    <div className="bg-[#0B0B0E] min-h-screen text-white pb-16 lg:pb-0">
       {/* BARRE DE NAVIGATION SUPÉRIEURE */}
       <header className="sticky top-0 z-40 bg-[#0B0B0E]/95 backdrop-blur-md border-b border-white/[0.08]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
@@ -72,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-6">
               {NAV_ITEMS.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
@@ -137,8 +142,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             <button
               onClick={() => navigate("/profile?tab=quests")}
-              title="Voir vos Succès"
-              className="flex items-center gap-1.5 bg-[#121217] hover:bg-[#181820] border border-white/[0.08] rounded-xl px-2.5 py-1.5"
+              title={
+                rewardsCount > 0
+                  ? `${rewardsCount} récompense${rewardsCount > 1 ? "s" : ""} à récupérer`
+                  : "Voir vos Succès"
+              }
+              className="relative flex items-center gap-1.5 bg-[#121217] hover:bg-[#181820] border border-white/[0.08] rounded-xl px-2.5 py-1.5"
             >
               <div className="w-4 h-4 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B] flex items-center justify-center">
                 <Coins className="w-2.5 h-2.5 text-[#F59E0B]" />
@@ -146,6 +155,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="font-bold text-xs text-[#F3F4F6] tracking-tight">
                 {(me?.coins ?? 0).toLocaleString("fr-FR")}
               </span>
+              {rewardsCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] px-1 py-0.5 rounded-full bg-[#E50914] text-white text-[10px] font-black text-center leading-none border border-[#0B0B0E]">
+                  {rewardsCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -165,7 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* BARRE DE NAVIGATION INFÉRIEURE MOBILE */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#121217]/95 backdrop-blur-md border-t border-white/10 px-1.5 py-2 flex items-center justify-around">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#121217]/95 backdrop-blur-md border-t border-white/10 px-1.5 py-2 flex items-center justify-around">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.path;
           const IconComp = item.icon;
@@ -193,6 +207,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           );
         })}
       </nav>
+
+      <DailyRewardPopup />
     </div>
   );
 }
