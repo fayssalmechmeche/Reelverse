@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: reelverse
       POSTGRES_PASSWORD: reelverse
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: reelverse-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -37,7 +37,6 @@ services:
     restart: unless-stopped
     environment:
       APP_ENV: dev
-      APP_SECRET: reelverse-secret
       DATABASE_URL: postgresql://reelverse:reelverse@postgres:5432/reelverse?serverVersion=16&charset=utf8
       REDIS_URL: redis://redis:6379
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
