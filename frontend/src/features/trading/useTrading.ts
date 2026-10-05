@@ -13,8 +13,10 @@ export interface TradeData {
   id: number;
   proposerId: number;
   proposerUsername: string;
+  proposerAvatarUrl: string | null;
   recipientId: number;
   recipientUsername: string;
+  recipientAvatarUrl: string | null;
   status: "pending" | "accepted" | "cancelled" | "expired";
   expiresAt: string;
   items: TradeItem[];

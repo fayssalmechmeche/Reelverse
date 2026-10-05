@@ -4,6 +4,7 @@ import type { RarityKey } from "../../design/rarity";
 export interface PlayerProfileInfo {
   id: number;
   username: string;
+  avatarUrl: string | null;
 }
 
 export interface PlayerInventoryCard {

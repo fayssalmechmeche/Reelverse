@@ -12,6 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import { useMe } from "../auth/useMe";
+import { Avatar } from "../../components/Avatar";
 import {
   useFriendsData,
   useBlockedUsers,
@@ -192,6 +193,10 @@ export function SocialScreen() {
         : trade.proposerUsername;
     const otherUserId =
       trade.proposerId === myId ? trade.recipientId : trade.proposerId;
+    const otherAvatarUrl =
+      trade.proposerId === myId
+        ? trade.recipientAvatarUrl
+        : trade.proposerAvatarUrl;
 
     return (
       <div className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
@@ -201,9 +206,12 @@ export function SocialScreen() {
             onClick={() => navigate(`/players/${otherUserId}`)}
             className="flex items-center gap-2.5 text-left hover:opacity-80"
           >
-            <div className="w-9 h-9 rounded-xl bg-[#22222C] border border-[#E50914]/25 flex items-center justify-center font-black text-xs text-[#F3F4F6]">
-              {otherUsername.slice(0, 2).toUpperCase()}
-            </div>
+            <Avatar
+              src={otherAvatarUrl}
+              name={otherUsername}
+              compact
+              className="w-9 h-9 text-xs"
+            />
             <div>
               <div className="text-sm font-bold text-[#F3F4F6] hover:text-[#E50914] hover:underline">
                 Avec @{otherUsername}
@@ -406,9 +414,15 @@ export function SocialScreen() {
                 <button
                   type="button"
                   onClick={() => navigate(`/players/${r.id}`)}
-                  className="text-sm font-bold text-[#F3F4F6] hover:text-[#E50914] hover:underline"
+                  className="flex items-center gap-2.5 text-sm font-bold text-[#F3F4F6] hover:text-[#E50914] hover:underline"
                 >
-                  @{r.username}
+                  <Avatar
+                    src={r.avatarUrl}
+                    name={r.username}
+                    compact
+                    className="w-8 h-8 text-[10px]"
+                  />
+                  <span>@{r.username}</span>
                 </button>
                 <button
                   onClick={() =>
@@ -438,8 +452,14 @@ export function SocialScreen() {
                 key={f.id}
                 className="p-3 rounded-xl bg-[#181820] border border-white/10 flex flex-wrap items-center justify-between gap-2"
               >
-                <span className="font-bold text-sm text-[#F3F4F6]">
-                  @{f.username}
+                <span className="flex items-center gap-2.5 font-bold text-sm text-[#F3F4F6]">
+                  <Avatar
+                    src={f.avatarUrl}
+                    name={f.username}
+                    compact
+                    className="w-8 h-8 text-[10px]"
+                  />
+                  <span>@{f.username}</span>
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button
@@ -473,8 +493,14 @@ export function SocialScreen() {
                 key={f.id}
                 className="flex items-center justify-between bg-[#181820] rounded-xl p-3"
               >
-                <span className="text-sm font-bold text-[#F3F4F6]">
-                  @{f.username}
+                <span className="flex items-center gap-2.5 text-sm font-bold text-[#F3F4F6]">
+                  <Avatar
+                    src={f.avatarUrl}
+                    name={f.username}
+                    compact
+                    className="w-8 h-8 text-[10px]"
+                  />
+                  <span>@{f.username}</span>
                 </span>
                 <span className="text-[11px] text-[#71717A] uppercase font-semibold">
                   En attente
@@ -506,9 +532,12 @@ export function SocialScreen() {
                   onClick={() => navigate(`/players/${f.userId}`)}
                   className="flex items-center gap-3 text-left hover:opacity-80"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#22222C] border border-white/10 flex items-center justify-center font-black text-xs text-[#F3F4F6]">
-                    {f.username.slice(0, 2).toUpperCase()}
-                  </div>
+                  <Avatar
+                    src={f.avatarUrl}
+                    name={f.username}
+                    compact
+                    className="w-10 h-10 text-xs"
+                  />
                   <div>
                     <div className="font-bold text-sm text-[#F3F4F6] hover:text-[#E50914] hover:underline">
                       @{f.username}

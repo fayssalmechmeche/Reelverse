@@ -38,8 +38,10 @@ class ListTradesController
             'id' => $t->getId(),
             'proposerId' => $t->getProposer()->getId(),
             'proposerUsername' => $t->getProposer()->getPseudo(),
+            'proposerAvatarUrl' => $t->getProposer()->getAvatarUrl(),
             'recipientId' => $t->getRecipient()->getId(),
             'recipientUsername' => $t->getRecipient()->getPseudo(),
+            'recipientAvatarUrl' => $t->getRecipient()->getAvatarUrl(),
             'status' => $t->getStatus()->value,
             'expiresAt' => $t->getExpiresAt()->format(\DateTimeImmutable::ATOM),
             'items' => array_map(fn($item) => [

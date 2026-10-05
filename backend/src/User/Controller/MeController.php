@@ -33,9 +33,7 @@ class MeController
         return new JsonResponse([
             'id' => $user->getId(),
             'username' => $user->getPseudo(),
-            'avatarUrl' => $user->getAvatar()
-                ? sprintf('/api/users/%d/avatar?v=%s', $user->getId(), $user->getAvatar())
-                : null,
+            'avatarUrl' => $user->getAvatarUrl(),
             'coins' => $wallet?->getBalance() ?? 0,
         ]);
     }

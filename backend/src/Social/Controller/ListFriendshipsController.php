@@ -40,7 +40,7 @@ class ListFriendshipsController
 
         foreach ($all as $f) {
             $other = $f->getOtherUser($me);
-            $entry = ['id' => $f->getId(), 'userId' => $other->getId(), 'username' => $other->getPseudo()];
+            $entry = ['id' => $f->getId(), 'userId' => $other->getId(), 'username' => $other->getPseudo(), 'avatarUrl' => $other->getAvatarUrl()];
 
             if ($f->getStatus() === FriendshipStatus::ACCEPTED) {
                 $friends[] = $entry;

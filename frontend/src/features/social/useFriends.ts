@@ -4,6 +4,7 @@ export interface FriendEntry {
   id: number;
   userId: number;
   username: string;
+  avatarUrl: string | null;
 }
 
 export interface FriendsData {
@@ -21,6 +22,7 @@ export interface BlockedEntry {
 export interface SearchResult {
   id: number;
   username: string;
+  avatarUrl: string | null;
 }
 
 async function get<T>(url: string): Promise<T> {

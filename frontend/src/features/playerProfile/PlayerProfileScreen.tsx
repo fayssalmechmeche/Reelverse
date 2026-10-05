@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
+import { Avatar } from "../../components/Avatar";
 import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
 import {
   usePlayerProfile,
@@ -168,9 +169,12 @@ export function PlayerProfileScreen() {
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div className="w-10 h-10 rounded-xl bg-[#22222C] border border-white/10 flex items-center justify-center font-black text-sm text-[#F3F4F6] shrink-0">
-          {profile.username.slice(0, 2).toUpperCase()}
-        </div>
+        <Avatar
+          src={profile.avatarUrl}
+          name={profile.username}
+          compact
+          className="w-10 h-10 text-sm"
+        />
         <div>
           <h2 className="text-xl font-black text-[#F3F4F6]">
             @{profile.username}

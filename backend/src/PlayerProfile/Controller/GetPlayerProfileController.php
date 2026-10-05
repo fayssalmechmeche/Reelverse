@@ -40,6 +40,7 @@ class GetPlayerProfileController
         return new JsonResponse([
             'id' => $player->getId(),
             'username' => $player->getPseudo(),
+            'avatarUrl' => $player->getAvatarUrl(),
         ]);
     }
 }

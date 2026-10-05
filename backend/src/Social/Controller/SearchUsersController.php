@@ -43,6 +43,7 @@ class SearchUsersController
         return new JsonResponse(array_map(fn($u) => [
             'id' => $u->getId(),
             'username' => $u->getPseudo(),
+            'avatarUrl' => $u->getAvatarUrl(),
         ], $users));
     }
 }

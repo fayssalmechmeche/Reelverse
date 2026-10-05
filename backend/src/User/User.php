@@ -79,6 +79,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getAvatarUrl(): ?string
+    {
+        return $this->avatar
+            ? sprintf('/api/users/%d/avatar?v=%s', $this->id, $this->avatar)
+            : null;
+    }
+
     public function getUserIdentifier(): string
     {
         return $this->email;
