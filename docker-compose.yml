@@ -29,6 +29,13 @@ services:
       timeout: 5s
       retries: 10
 
+  mailpit:
+    image: axllent/mailpit
+    container_name: reelverse-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+
   backend:
     build:
       context: ./backend
@@ -40,6 +47,9 @@ services:
       DATABASE_URL: postgresql://reelverse:reelverse@postgres:5432/reelverse?serverVersion=16&charset=utf8
       REDIS_URL: redis://redis:6379
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
+      MAILER_DSN: smtp://mailpit:1025
+      MAILER_FROM: no-reply@reelverse.local
+      FRONTEND_URL: http://localhost:5173
     ports:
       - "8000:8000"
     volumes:

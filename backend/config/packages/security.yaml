@@ -25,7 +25,13 @@ security:
                 failure_handler: App\User\Security\LoginFailureHandler
             login_throttling:
                 max_attempts: 5
-                interval: '15 minutes'
+                interval: "15 minutes"
+
+        # Routes publiques : sans firewall, un vieux cookie JWT expiré ne les bloque plus.
+        public:
+            pattern: ^/api/(register|forgot-password|reset-password|logout)$
+            stateless: true
+            security: false
 
         api:
             pattern: ^/api
@@ -39,6 +45,8 @@ security:
     access_control:
         - { path: ^/api/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/forgot-password$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/reset-password$, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

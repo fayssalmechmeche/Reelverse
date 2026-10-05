@@ -29,7 +29,8 @@ export function LoginPage() {
       if (res.status === 429) {
         const data = await res.json().catch(() => null);
         setError(
-          data?.error ?? "Trop de tentatives de connexion. Réessayez plus tard.",
+          data?.error ??
+            "Trop de tentatives de connexion. Réessayez plus tard.",
         );
         return;
       }
@@ -93,12 +94,12 @@ export function LoginPage() {
             <label className="text-xs font-bold text-[#9CA3AF]">
               Mot de passe
             </label>
-            <span
-              className="text-[11px] font-semibold text-[#9CA3AF]/40 cursor-not-allowed"
-              title="Bientôt disponible"
+            <Link
+              to="/forgot-password"
+              className="text-[11px] font-semibold text-[#9CA3AF] hover:text-white"
             >
               Mot de passe oublié ?
-            </span>
+            </Link>
           </div>
           <div className="relative">
             <KeyRound className="w-4 h-4 text-[#9CA3AF] absolute left-3.5 top-1/2 -translate-y-1/2" />

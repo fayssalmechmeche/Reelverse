@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 import { useAuth } from "./features/auth/AuthContext";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
+import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
 import { AppShell } from "./features/layout/AppShell";
 import { HomeScreen } from "./features/home/HomeScreen";
 import { MovieDetail } from "./features/movies/MovieDetail";
@@ -28,6 +30,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       {isAuthenticated ? (
         <>
           <Route
