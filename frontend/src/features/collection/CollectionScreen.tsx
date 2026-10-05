@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSessionState } from "../../hooks/useSessionState";
+import { useScrollRestoration } from "../../hooks/useScrollRestoration";
 import { Search, ArrowUpDown, Eye, EyeOff } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
 import {
@@ -103,13 +105,30 @@ export function CollectionScreen() {
     [saleList],
   );
 
-  const [subTab, setSubTab] = useState<SubTab>("ALL");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
-  const [rarityFilter, setRarityFilter] = useState<RarityFilter>("ALL");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("OWNED_FIRST");
-  const [hideMissing, setHideMissing] = useState(false);
-  const [page, setPage] = useState(0);
+  // Filtres et page gardés en mémoire (onglet) : on les retrouve en revenant
+  // d'une fiche film / série / acteur.
+  const [subTab, setSubTab] = useSessionState<SubTab>(
+    "collection:subTab",
+    "OWNED",
+  );
+  const [typeFilter, setTypeFilter] = useSessionState<TypeFilter>(
+    "collection:typeFilter",
+    "ALL",
+  );
+  const [rarityFilter, setRarityFilter] = useSessionState<RarityFilter>(
+    "collection:rarityFilter",
+    "ALL",
+  );
+  const [search, setSearch] = useSessionState("collection:search", "");
+  const [sortBy, setSortBy] = useSessionState<SortBy>(
+    "collection:sortBy",
+    "OWNED_FIRST",
+  );
+  const [hideMissing, setHideMissing] = useSessionState(
+    "collection:hideMissing",
+    false,
+  );
+  const [page, setPage] = useSessionState("collection:page", 0);
 
   const [sellTarget, setSellTarget] = useState<ResolvedCatalogCard | null>(
     null,
@@ -209,13 +228,37 @@ export function CollectionScreen() {
 
   // Revenir à la page 1 à chaque changement de filtre, ou si la page
   // courante dépasse le nombre de pages disponibles (ex: après une vente).
+  // On ne remet la page à 0 que quand un filtre CHANGE vraiment (pas au
+  // montage, sinon on perdrait la page mémorisée en revenant d'une fiche).
+  const filterKey = [
+    subTab,
+    typeFilter,
+    rarityFilter,
+    search,
+    hideMissing,
+  ].join("|");
+  const previousFilterKey = useRef(filterKey);
   useEffect(() => {
-    setPage(0);
-  }, [subTab, typeFilter, rarityFilter, search, hideMissing]);
+    if (previousFilterKey.current !== filterKey) {
+      previousFilterKey.current = filterKey;
+      setPage(0);
+    }
+  }, [filterKey, setPage]);
+
+  // Contenu prêt : catalogue chargé et noms résolus (sinon la liste filtrée
+  // est temporairement vide et la page serait ramenée à tort à 0).
+  const isReady =
+    !isLoading &&
+    catalog.length > 0 &&
+    resolvedResults.every((r) => !r.isPending);
 
   useEffect(() => {
-    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
-  }, [page, totalPages]);
+    if (isReady && page > totalPages - 1) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [isReady, page, totalPages, setPage]);
+
+  useScrollRestoration("collection", isReady);
 
   const cards = useMemo(
     () => filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),

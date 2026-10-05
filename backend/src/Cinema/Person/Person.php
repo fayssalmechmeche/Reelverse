@@ -34,6 +34,12 @@ class Person
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $popularity = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $biography = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $biographyFetchedAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -76,6 +82,26 @@ class Person
     public function setPopularity(?float $popularity): static
     {
         $this->popularity = $popularity;
+        return $this;
+    }
+
+    public function getBiography(): ?string
+    {
+        return $this->biography;
+    }
+    public function setBiography(?string $biography): static
+    {
+        $this->biography = $biography;
+        return $this;
+    }
+
+    public function getBiographyFetchedAt(): ?\DateTimeImmutable
+    {
+        return $this->biographyFetchedAt;
+    }
+    public function setBiographyFetchedAt(?\DateTimeImmutable $biographyFetchedAt): static
+    {
+        $this->biographyFetchedAt = $biographyFetchedAt;
         return $this;
     }
 }

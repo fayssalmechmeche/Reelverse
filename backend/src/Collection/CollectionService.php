@@ -83,7 +83,7 @@ class CollectionService
                     'typeEmoji' => '👤',
                     'typeLabel' => 'Acteur',
                     'subtitle' => 'Acteur',
-                    'description' => null,
+                    'description' => $person->getBiography(),
                 ],
                 $this->resolveSelfCard($user, CardType::PERSON, $person->getId()),
             ),
