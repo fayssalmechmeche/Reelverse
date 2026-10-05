@@ -143,6 +143,17 @@ export function CollectionPage({
           </div>
         </div>
 
+        {entity.description && (
+          <div className="space-y-1 pt-1 border-t border-white/[0.06] mt-1">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#9CA3AF] pt-3">
+              Synopsis
+            </h3>
+            <p className="text-sm leading-relaxed text-[#D1D5DB]">
+              {entity.description}
+            </p>
+          </div>
+        )}
+
         {entity.cardId !== null && (
           <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/[0.06] mt-1">
             <button
@@ -175,7 +186,11 @@ export function CollectionPage({
 
             <button
               type="button"
-              onClick={() => navigate(`/marketplace?cardId=${entity.cardId}`)}
+              onClick={() =>
+                navigate(
+                  `/marketplace?search=${encodeURIComponent(entity.name)}`,
+                )
+              }
               className="px-3.5 py-2 rounded-xl bg-[#181820] border border-white/10 text-xs font-bold text-[#9CA3AF] hover:text-white flex items-center gap-1.5"
             >
               <Tag className="w-3.5 h-3.5" />

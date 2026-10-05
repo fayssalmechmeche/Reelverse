@@ -41,6 +41,7 @@ class ImportMoviesCommand extends Command
                 $movie->setPosterPath($result['poster_path'] ?? null);
                 $movie->setPopularity($result['popularity'] ?? null);
                 $movie->setVoteCount($result['vote_count'] ?? null);
+                $movie->setOverview(!empty($result['overview']) ? $result['overview'] : null);
 
                 if (!empty($result['release_date'])) {
                     $movie->setReleaseDate(new \DateTimeImmutable($result['release_date']));

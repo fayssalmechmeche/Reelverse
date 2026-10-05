@@ -41,6 +41,7 @@ class ImportSeriesCommand extends Command
                 $series->setPosterPath($result['poster_path'] ?? null);
                 $series->setPopularity($result['popularity'] ?? null);
                 $series->setVoteCount($result['vote_count'] ?? null);
+                $series->setOverview(!empty($result['overview']) ? $result['overview'] : null);
 
                 if (!empty($result['first_air_date'])) {
                     $series->setFirstAirDate(new \DateTimeImmutable($result['first_air_date']));

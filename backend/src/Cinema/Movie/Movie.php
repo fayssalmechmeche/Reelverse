@@ -40,6 +40,9 @@ class Movie
     #[ORM\Column(nullable: true)]
     private ?int $voteCount = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $overview = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -102,6 +105,16 @@ class Movie
     public function setVoteCount(?int $voteCount): static
     {
         $this->voteCount = $voteCount;
+        return $this;
+    }
+
+    public function getOverview(): ?string
+    {
+        return $this->overview;
+    }
+    public function setOverview(?string $overview): static
+    {
+        $this->overview = $overview;
         return $this;
     }
 }

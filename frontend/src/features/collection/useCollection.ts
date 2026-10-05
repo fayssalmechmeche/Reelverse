@@ -12,6 +12,7 @@ export interface CollectionEntity {
   typeEmoji: string;
   typeLabel: string;
   subtitle: string;
+  description: string | null;
   cardId: number | null;
   userCardId: number | null;
   rarity: RarityKey | null;
