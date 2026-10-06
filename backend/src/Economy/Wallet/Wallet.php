@@ -2,16 +2,9 @@
 
 namespace App\Economy\Wallet;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Get;
 use Doctrine\ORM\Mapping as ORM;
 use App\User\User;
 
-#[ApiResource(
-    operations: [
-        new Get(),
-    ]
-)]
 #[ORM\Entity]
 #[ORM\Table(name: 'wallet')]
 class Wallet
