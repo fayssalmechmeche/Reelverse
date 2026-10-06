@@ -71,6 +71,13 @@ class PackStock
         return $this;
     }
 
+    public function setStoredPacks(int $storedPacks): static
+    {
+        $this->storedPacks = max(0, min(PackDrawConfig::MAX_PACKS_STOCK, $storedPacks));
+        $this->lastComputedAt = new \DateTimeImmutable();
+        return $this;
+    }
+
     public function consumeOne(): static
     {
         if ($this->storedPacks <= 0) {

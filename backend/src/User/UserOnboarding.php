@@ -6,6 +6,7 @@ use App\Economy\Wallet\Wallet;
 use App\LoginStreak\LoginStreak;
 use App\Pack\PackStock;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Pack\PackDrawConfig;
 
 class UserOnboarding
 {
@@ -28,6 +29,7 @@ class UserOnboarding
 
         $loginStreak = new LoginStreak();
         $loginStreak->setUser($user);
+        $stock->setStoredPacks(PackDrawConfig::MAX_PACKS_STOCK);
         $this->em->persist($loginStreak);
     }
 }

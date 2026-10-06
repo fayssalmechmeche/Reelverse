@@ -29,7 +29,7 @@ security:
 
         # Routes publiques : sans firewall, un vieux cookie JWT expiré ne les bloque plus.
         public:
-            pattern: ^/api/(register|forgot-password|reset-password|logout)$
+            pattern: ^/api/(register|forgot-password|reset-password|logout|connect/(google|discord)(/check)?)$
             stateless: true
             security: false
 
@@ -50,3 +50,4 @@ security:
         - { path: ^/api/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/connect/(google|discord)(/check)?$, roles: PUBLIC_ACCESS }
