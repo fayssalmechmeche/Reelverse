@@ -96,7 +96,7 @@ export function CinemaCard({
           } ${compact ? "left-1.5 right-1.5 sm:left-2.5 sm:right-2.5" : "left-2.5 right-2.5"} flex items-center justify-between gap-1.5 sm:gap-2 transition-all`}
         >
           <span
-            className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-md font-medium bg-[#121217]/90 text-[#F3F4F6] border border-white/10 backdrop-blur-md ${
+            className={`inline-flex shrink-0 items-center gap-1 sm:gap-1.5 rounded-md font-medium bg-[#121217]/90 text-[#F3F4F6] border border-white/10 backdrop-blur-md ${
               compact
                 ? "px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[9px] sm:text-[11px]"
                 : "px-2.5 py-1 text-[11px]"
@@ -104,7 +104,6 @@ export function CinemaCard({
           >
             <span>{typeEmoji}</span>
             {!compact && <span>{typeLabel}</span>}
-            {compact && <span className="hidden sm:inline">{typeLabel}</span>}
           </span>
 
           <span
@@ -117,7 +116,7 @@ export function CinemaCard({
                     borderColor: "rgba(113,113,122,0.3)",
                   }
             }
-            className={`rounded font-bold uppercase tracking-wider border backdrop-blur-md ${
+            className={`shrink-0 whitespace-nowrap rounded font-bold uppercase tracking-wider border backdrop-blur-md ${
               compact
                 ? "px-1 sm:px-2 py-0.5 text-[8px] sm:text-[10px]"
                 : "px-2 py-0.5 text-[10px]"

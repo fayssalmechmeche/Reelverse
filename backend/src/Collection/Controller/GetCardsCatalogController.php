@@ -206,12 +206,24 @@ class GetCardsCatalogController
                     ->addOrderBy('sortName', 'ASC');
                 break;
             case 'YEAR_DESC':
-                // Films et séries par date de sortie décroissante ; acteurs et
-                // personnages (sans date) à la fin, par ordre alphabétique.
-                $qb->addSelect('CASE WHEN COALESCE(m.releaseDate, s.firstAirDate) IS NULL THEN 0 ELSE 1 END AS HIDDEN hasDate')
-                    ->addSelect('COALESCE(m.releaseDate, s.firstAirDate) AS HIDDEN sortDate')
-                    ->orderBy('hasDate', 'DESC')
-                    ->addOrderBy('sortDate', 'DESC')
+                // 1) films et séries déjà sortis, du plus récent au plus ancien ;
+                // 2) puis ceux à venir, du plus proche au plus lointain ;
+                // 3) puis les cartes sans date (acteurs, personnages), par nom.
+                // dayDiff = nombre de jours entre la sortie et aujourd'hui
+                // (<= 0 : sorti, > 0 : à venir).
+                $qb->addSelect(
+                    'CASE WHEN COALESCE(m.releaseDate, s.firstAirDate) IS NULL THEN 0 '
+                        . 'WHEN DATE_DIFF(COALESCE(m.releaseDate, s.firstAirDate), CURRENT_DATE()) <= 0 THEN 2 '
+                        . 'ELSE 1 END AS HIDDEN releaseRank'
+                )
+                    ->addSelect(
+                        'CASE WHEN COALESCE(m.releaseDate, s.firstAirDate) IS NULL THEN 0 '
+                            . 'WHEN DATE_DIFF(COALESCE(m.releaseDate, s.firstAirDate), CURRENT_DATE()) <= 0 '
+                            . 'THEN DATE_DIFF(COALESCE(m.releaseDate, s.firstAirDate), CURRENT_DATE()) '
+                            . 'ELSE 0 - DATE_DIFF(COALESCE(m.releaseDate, s.firstAirDate), CURRENT_DATE()) END AS HIDDEN releaseOrder'
+                    )
+                    ->orderBy('releaseRank', 'DESC')
+                    ->addOrderBy('releaseOrder', 'DESC')
                     ->addOrderBy('sortName', 'ASC');
                 break;
             default: // OWNED_FIRST
