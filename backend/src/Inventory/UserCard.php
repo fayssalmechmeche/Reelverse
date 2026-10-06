@@ -27,6 +27,10 @@ class UserCard
     #[ORM\Column]
     private int $quantity = 0;
 
+    /** Carte obtenue et pas encore consultée (onglet "Nouvelles"). */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isNew = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -55,6 +59,17 @@ class UserCard
     public function getQuantity(): int
     {
         return $this->quantity;
+    }
+
+    public function isNew(): bool
+    {
+        return $this->isNew;
+    }
+
+    public function setIsNew(bool $isNew): static
+    {
+        $this->isNew = $isNew;
+        return $this;
     }
 
     public function addQuantity(int $amount = 1): static

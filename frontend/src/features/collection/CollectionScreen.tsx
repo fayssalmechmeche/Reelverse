@@ -6,8 +6,10 @@ import { Search, ArrowUpDown, Eye, EyeOff } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
 import {
   useCardsCatalog,
+  useMarkCardSeen,
   type CatalogCard,
   type CatalogParams,
+  type CatalogSort,
 } from "../inventory/useCardsCatalog";
 import { QuickSellModal } from "../inventory/QuickSellModal";
 import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
@@ -35,17 +37,19 @@ type SubTab =
   | "ALL"
   | "OWNED"
   | "MISSING"
+  | "NEW"
   | "DUPLICATES"
   | "WISHLIST"
   | "TRADELIST";
 type TypeFilter = "ALL" | CatalogCard["type"];
 type RarityFilter = "ALL" | RarityKey;
-type SortBy = "OWNED_FIRST" | "NAME_ASC" | "RARITY_DESC";
+type SortBy = CatalogSort;
 
 const SUB_TABS: { id: SubTab; emoji: string; label: string }[] = [
   { id: "ALL", emoji: "🗂️", label: "Toutes" },
   { id: "OWNED", emoji: "🃏", label: "Possédées" },
   { id: "MISSING", emoji: "❓", label: "Manquantes" },
+  { id: "NEW", emoji: "✨", label: "Nouvelles" },
   { id: "DUPLICATES", emoji: "🔄", label: "Doublons" },
   { id: "WISHLIST", emoji: "❤️", label: "Wishlist" },
   { id: "TRADELIST", emoji: "💰", label: "À échanger" },
@@ -121,6 +125,8 @@ export function CollectionScreen() {
   );
   const [page, setPage] = useSessionState("collection:page", 0);
 
+  const markSeen = useMarkCardSeen();
+
   const [sellTarget, setSellTarget] = useState<ResolvedCatalogCard | null>(
     null,
   );
@@ -189,6 +195,7 @@ export function CollectionScreen() {
     ALL: totalCount,
     OWNED: ownedCount,
     MISSING: totalCount - ownedCount,
+    NEW: catalogPage?.counts.new ?? 0,
     DUPLICATES: catalogPage?.counts.duplicates ?? 0,
     WISHLIST: wishlistedCardIds.size,
     TRADELIST: saleListCardIds.size,
@@ -232,6 +239,8 @@ export function CollectionScreen() {
   useScrollRestoration("collection", isReady);
 
   function goToDetail(card: ResolvedCatalogCard) {
+    // Consulter une carte "nouvelle" la retire de l'onglet Nouvelles.
+    if (card.isNew) markSeen.mutate(card.cardId);
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
@@ -298,11 +307,17 @@ export function CollectionScreen() {
               <option value="OWNED_FIRST" className="bg-[#181820]">
                 Possédées d'abord
               </option>
-              <option value="NAME_ASC" className="bg-[#181820]">
-                Nom (A-Z)
-              </option>
               <option value="RARITY_DESC" className="bg-[#181820]">
                 Rareté (Légendaire ↓)
+              </option>
+              <option value="RARITY_ASC" className="bg-[#181820]">
+                Rareté (Commune ↑)
+              </option>
+              <option value="NAME_ASC" className="bg-[#181820]">
+                Alphabétique (A-Z)
+              </option>
+              <option value="YEAR_DESC" className="bg-[#181820]">
+                Plus récentes
               </option>
             </select>
           </div>
@@ -377,13 +392,19 @@ export function CollectionScreen() {
               key={r.id}
               type="button"
               onClick={() => setRarityFilter(r.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border capitalize ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border flex items-center gap-1.5 capitalize ${
                 rarityFilter === r.id
                   ? "bg-[#22222C] text-[#F3F4F6] border-white/25"
                   : "bg-[#181820]/60 text-[#9CA3AF] border-transparent hover:text-white"
               }`}
             >
-              {r.label}
+              {r.id !== "ALL" && (
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: RARITY_CONFIG[r.id].accentHex }}
+                />
+              )}
+              <span>{r.label}</span>
             </button>
           ))}
         </div>
@@ -405,6 +426,7 @@ export function CollectionScreen() {
                 typeLabel={card.typeLabel}
                 rarity={card.rarity}
                 quantity={card.quantity}
+                isNew={card.isNew}
                 onClick={() => goToDetail(card)}
                 compact={true}
                 isWishlisted={wishlistedCardIds.has(card.cardId)}

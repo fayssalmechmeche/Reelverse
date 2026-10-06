@@ -22,6 +22,11 @@ class InventoryManager
             $userCard->setCard($card);
         }
 
+        // Première obtention (ou retour après une revente totale) : carte "nouvelle"
+        if ($userCard->getQuantity() === 0 && $quantity > 0) {
+            $userCard->setIsNew(true);
+        }
+
         $userCard->addQuantity($quantity);
         $this->em->persist($userCard);
 

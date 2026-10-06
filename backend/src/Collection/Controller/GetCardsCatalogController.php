@@ -26,12 +26,12 @@ use Symfony\Component\Routing\Attribute\Route;
  * Paramètres de requête (tous optionnels) :
  *  - page      : numéro de page, à partir de 0
  *  - perPage   : cartes par page (1 à 60, 15 par défaut)
- *  - tab       : ALL | OWNED | MISSING | DUPLICATES | WISHLIST | TRADELIST
+ *  - tab       : ALL | OWNED | MISSING | NEW | DUPLICATES | WISHLIST | TRADELIST
  *  - type      : person | movie | series | character
  *  - rarity    : common | uncommon | rare | epic | legendary
  *  - hideMissing : 1 pour masquer les cartes non possédées
  *  - search    : recherche sur le nom de la carte
- *  - sort      : OWNED_FIRST | NAME_ASC | RARITY_DESC
+ *  - sort      : OWNED_FIRST | NAME_ASC | RARITY_DESC | RARITY_ASC | YEAR_DESC
  *
  * Note : placé volontairement hors de /api/cards/... car Card est une
  * ApiResource avec une route GET /api/cards/{id} générée automatiquement,
@@ -41,10 +41,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 class GetCardsCatalogController
 {
-    private const TABS = ['ALL', 'OWNED', 'MISSING', 'DUPLICATES', 'WISHLIST', 'TRADELIST'];
+    private const TABS = ['ALL', 'OWNED', 'MISSING', 'NEW', 'DUPLICATES', 'WISHLIST', 'TRADELIST'];
     private const TYPES = ['person', 'movie', 'series', 'character'];
     private const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-    private const SORTS = ['OWNED_FIRST', 'NAME_ASC', 'RARITY_DESC'];
+    private const SORTS = ['OWNED_FIRST', 'NAME_ASC', 'RARITY_DESC', 'RARITY_ASC', 'YEAR_DESC'];
 
     private const DEFAULT_PER_PAGE = 15;
     private const MAX_PER_PAGE = 60;
@@ -101,6 +101,7 @@ class GetCardsCatalogController
             'entityId' => (int) $row['entityId'],
             'rarity' => $this->enumValue($row['rarity']),
             'quantity' => (int) $row['quantity'],
+            'isNew' => (int) $row['isNew'] === 1,
         ], $rows);
 
         return new JsonResponse([
@@ -136,6 +137,9 @@ class GetCardsCatalogController
                 break;
             case 'MISSING':
                 $qb->andWhere('uc.quantity IS NULL OR uc.quantity = 0');
+                break;
+            case 'NEW':
+                $qb->andWhere('uc.quantity > 0 AND uc.isNew = true');
                 break;
             case 'DUPLICATES':
                 $qb->andWhere('uc.quantity >= 2');
@@ -178,6 +182,7 @@ class GetCardsCatalogController
                 'c.entityId AS entityId',
                 'c.rarity AS rarity',
                 'COALESCE(uc.quantity, 0) AS quantity',
+                'CASE WHEN uc.isNew = true AND uc.quantity > 0 THEN 1 ELSE 0 END AS isNew',
                 'uc.id AS userCardId',
             )
             ->addSelect('COALESCE(m.title, s.name, p.name, ch.name) AS HIDDEN sortName');
@@ -191,6 +196,22 @@ class GetCardsCatalogController
                     "CASE c.rarity WHEN 'legendary' THEN 5 WHEN 'epic' THEN 4 WHEN 'rare' THEN 3 WHEN 'uncommon' THEN 2 ELSE 1 END AS HIDDEN rarityRank"
                 )
                     ->orderBy('rarityRank', 'DESC')
+                    ->addOrderBy('sortName', 'ASC');
+                break;
+            case 'RARITY_ASC':
+                $qb->addSelect(
+                    "CASE c.rarity WHEN 'legendary' THEN 5 WHEN 'epic' THEN 4 WHEN 'rare' THEN 3 WHEN 'uncommon' THEN 2 ELSE 1 END AS HIDDEN rarityRank"
+                )
+                    ->orderBy('rarityRank', 'ASC')
+                    ->addOrderBy('sortName', 'ASC');
+                break;
+            case 'YEAR_DESC':
+                // Films et séries par date de sortie décroissante ; acteurs et
+                // personnages (sans date) à la fin, par ordre alphabétique.
+                $qb->addSelect('CASE WHEN COALESCE(m.releaseDate, s.firstAirDate) IS NULL THEN 0 ELSE 1 END AS HIDDEN hasDate')
+                    ->addSelect('COALESCE(m.releaseDate, s.firstAirDate) AS HIDDEN sortDate')
+                    ->orderBy('hasDate', 'DESC')
+                    ->addOrderBy('sortDate', 'DESC')
                     ->addOrderBy('sortName', 'ASC');
                 break;
             default: // OWNED_FIRST
@@ -207,7 +228,7 @@ class GetCardsCatalogController
      * Compteurs globaux (indépendants des filtres) pour les onglets et la
      * barre de progression de Ma Collection.
      *
-     * @return array{all: int, owned: int, duplicates: int}
+     * @return array{all: int, owned: int, duplicates: int, new: int}
      */
     private function globalCounts(User $user): array
     {
@@ -216,6 +237,7 @@ class GetCardsCatalogController
                 'COUNT(c.id) AS total',
                 'SUM(CASE WHEN uc.quantity > 0 THEN 1 ELSE 0 END) AS owned',
                 'SUM(CASE WHEN uc.quantity >= 2 THEN 1 ELSE 0 END) AS duplicates',
+                'SUM(CASE WHEN uc.quantity > 0 AND uc.isNew = true THEN 1 ELSE 0 END) AS newCards',
             )
             ->from(Card::class, 'c')
             ->leftJoin(UserCard::class, 'uc', 'WITH', 'uc.card = c AND uc.user = :user')
@@ -227,6 +249,7 @@ class GetCardsCatalogController
             'all' => (int) $row['total'],
             'owned' => (int) $row['owned'],
             'duplicates' => (int) $row['duplicates'],
+            'new' => (int) $row['newCards'],
         ];
     }
 

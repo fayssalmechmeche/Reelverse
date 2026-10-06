@@ -1,4 +1,9 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { RarityKey } from "../../design/rarity";
 
 export interface CatalogCard {
@@ -8,17 +13,24 @@ export interface CatalogCard {
   entityId: number;
   rarity: RarityKey;
   quantity: number;
+  isNew: boolean; // obtenue et pas encore consultée
 }
 
 export type CatalogTab =
   | "ALL"
   | "OWNED"
   | "MISSING"
+  | "NEW"
   | "DUPLICATES"
   | "WISHLIST"
   | "TRADELIST";
 
-export type CatalogSort = "OWNED_FIRST" | "NAME_ASC" | "RARITY_DESC";
+export type CatalogSort =
+  | "OWNED_FIRST"
+  | "NAME_ASC"
+  | "RARITY_DESC"
+  | "RARITY_ASC"
+  | "YEAR_DESC";
 
 export interface CatalogParams {
   page: number;
@@ -38,7 +50,7 @@ export interface CatalogPage {
   perPage: number;
   totalPages: number;
   // Compteurs globaux (indépendants des filtres)
-  counts: { all: number; owned: number; duplicates: number };
+  counts: { all: number; owned: number; duplicates: number; new: number };
 }
 
 function toQueryString(p: CatalogParams): string {
@@ -78,5 +90,22 @@ export function useCardsCatalog(params: CatalogParams) {
     // Garde la page précédente affichée pendant le chargement de la suivante
     placeholderData: keepPreviousData,
     staleTime: 10_000,
+  });
+}
+
+// Marque une carte comme "vue" : elle quitte l'onglet "Nouvelles".
+export function useMarkCardSeen() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cardId: number) => {
+      const res = await fetch(`/api/collection/cards/${cardId}/seen`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Impossible de marquer la carte comme vue.");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
+    },
   });
 }
