@@ -4,36 +4,40 @@ namespace App\Card;
 
 class RarityCalculator
 {
-    // Seuils configurables : le seul endroit du code où ils sont définis
-    private const POPULARITY_LEGENDARY = 200.0;
-    private const POPULARITY_EPIC = 80.0;
-    private const POPULARITY_RARE = 30.0;
-    private const POPULARITY_UNCOMMON = 10.0;
+    // Seuils calibrés sur le catalogue réel (percentiles de popularité TMDB) :
+    // Common ≈ 70 %, Uncommon ≈ 15 %, Rare ≈ 10 %, Epic ≈ 3,5 %, Legendary ≈ 1,5 %.
+    // Les séries ont une popularité TMDB nettement plus haute que les films : seuils séparés.
+    // Format : [seuil Legendary, seuil Epic, seuil Rare, seuil Uncommon]
+    private const MOVIE_THRESHOLDS = [39.0, 23.0, 12.8, 8.4];
+    private const SERIES_THRESHOLDS = [159.0, 94.0, 49.5, 30.0];
 
-    private const VOTE_COUNT_BONUS_THRESHOLD = 5000;
+    // Les personnes ont des scores de popularité TMDB bien plus bas que les titres.
+    // Les personnages héritent de la rareté de leur acteur.
+    private const PERSON_THRESHOLDS = [20.0, 8.0, 3.0, 1.0];
 
-    public function calculateForTitle(float $popularity, ?int $voteCount): Rarity
+    public function calculateForMovie(float $popularity): Rarity
     {
-        // Un titre très voté peut monter d'un cran, même si sa popularité TMDB a baissé avec le temps
-        $bonus = ($voteCount ?? 0) >= self::VOTE_COUNT_BONUS_THRESHOLD;
+        return $this->fromThresholds($popularity, self::MOVIE_THRESHOLDS);
+    }
 
-        return match (true) {
-            $popularity >= self::POPULARITY_LEGENDARY => Rarity::LEGENDARY,
-            $popularity >= self::POPULARITY_EPIC || ($bonus && $popularity >= self::POPULARITY_RARE) => Rarity::EPIC,
-            $popularity >= self::POPULARITY_RARE => Rarity::RARE,
-            $popularity >= self::POPULARITY_UNCOMMON => Rarity::UNCOMMON,
-            default => Rarity::COMMON,
-        };
+    public function calculateForSeries(float $popularity): Rarity
+    {
+        return $this->fromThresholds($popularity, self::SERIES_THRESHOLDS);
     }
 
     public function calculateForPerson(float $popularity): Rarity
     {
-        // Les personnes ont des scores de popularité TMDB plus bas que les films/séries, seuils réduits
+        return $this->fromThresholds($popularity, self::PERSON_THRESHOLDS);
+    }
+
+    /** @param array{0: float, 1: float, 2: float, 3: float} $thresholds */
+    private function fromThresholds(float $popularity, array $thresholds): Rarity
+    {
         return match (true) {
-            $popularity >= 20.0 => Rarity::LEGENDARY,
-            $popularity >= 8.0 => Rarity::EPIC,
-            $popularity >= 3.0 => Rarity::RARE,
-            $popularity >= 1.0 => Rarity::UNCOMMON,
+            $popularity >= $thresholds[0] => Rarity::LEGENDARY,
+            $popularity >= $thresholds[1] => Rarity::EPIC,
+            $popularity >= $thresholds[2] => Rarity::RARE,
+            $popularity >= $thresholds[3] => Rarity::UNCOMMON,
             default => Rarity::COMMON,
         };
     }

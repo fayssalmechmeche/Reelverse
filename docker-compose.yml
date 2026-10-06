@@ -50,6 +50,8 @@ services:
       MAILER_DSN: smtp://mailpit:1025
       MAILER_FROM: no-reply@reelverse.local
       FRONTEND_URL: http://localhost:5173
+      # Serveur PHP integre avec plusieurs processus (sinon une requete a la fois)
+      PHP_CLI_SERVER_WORKERS: "8"
     ports:
       - "8000:8000"
     volumes:
