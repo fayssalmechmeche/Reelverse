@@ -15,7 +15,7 @@ import {
   Package,
 } from "lucide-react";
 import { useMe } from "../auth/useMe";
-import { useInventory } from "../inventory/useInventory";
+import { useInventory, type InventoryCard } from "../inventory/useInventory";
 import { useResolvedCards } from "../cards/useResolvedCard";
 import {
   useMarketplaceListings,
@@ -49,7 +49,6 @@ export function MarketplaceScreen() {
     useMarketplaceListings();
   const { data: inventory = [] } = useInventory();
   const resolvedResults = useResolvedCards(listings.map((l) => l));
-  const createListing = useCreateListing();
   const buyListing = useBuyListing();
   const cancelListing = useCancelListing();
 
@@ -64,8 +63,9 @@ export function MarketplaceScreen() {
   >("PRICE_ASC");
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [sellModalOpen, setSellModalOpen] = useState(false);
-  const [sellCardId, setSellCardId] = useState<number | null>(null);
-  const [sellPrice, setSellPrice] = useState(100);
+  const [sellPrefillCardId, setSellPrefillCardId] = useState<number | null>(
+    null,
+  );
 
   const myId = me?.id ?? null;
 
@@ -171,9 +171,7 @@ export function MarketplaceScreen() {
   );
 
   function openSellModal(prefillCardId?: number) {
-    const owned = inventory.filter((c) => c.quantity > 0);
-    setSellCardId(prefillCardId ?? owned[0]?.cardId ?? null);
-    setSellPrice(100);
+    setSellPrefillCardId(prefillCardId ?? null);
     setActionError(null);
     setSellModalOpen(true);
   }
@@ -192,11 +190,6 @@ export function MarketplaceScreen() {
         <span>Chargement du marketplace...</span>
       </div>
     );
-
-  const sellingCard = inventory.find((c) => c.cardId === sellCardId);
-  const grossPrice = Math.max(10, Math.round(sellPrice || 0));
-  const taxAmount = Math.ceil((grossPrice * TAX_PERCENT) / 100);
-  const netSeller = grossPrice - taxAmount;
 
   return (
     <div className="space-y-5">
@@ -695,128 +688,255 @@ export function MarketplaceScreen() {
         })()}
 
       {sellModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[#121217] border border-white/15 p-5 space-y-4 shadow-2xl">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[11px] font-bold uppercase text-[#F59E0B]">
-                  Marketplace • Taxe de vente {TAX_PERCENT}%
-                </span>
-                <h3 className="text-lg font-black text-[#F3F4F6]">
-                  Mettre une carte en vente
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSellModalOpen(false)}
-                className="text-[#9CA3AF] hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        <SellModal
+          inventory={inventory}
+          initialCardId={sellPrefillCardId}
+          onClose={() => setSellModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#9CA3AF]">
-                Carte à vendre
-              </label>
-              <select
-                value={sellCardId ?? ""}
-                onChange={(e) => setSellCardId(Number(e.target.value))}
-                className="w-full p-2.5 rounded-xl bg-[#181820] border border-white/10 text-xs font-bold text-[#F3F4F6]"
-              >
-                <option value="">Choisir une carte</option>
-                {inventory
-                  .filter((c) => c.quantity > 0)
-                  .map((c) => (
-                    <option
-                      key={c.id}
-                      value={c.cardId}
-                      className="bg-[#181820]"
-                    >
-                      {c.type} #{c.entityId} ({c.rarity}) — Dispo : ×
-                      {c.quantity}
-                    </option>
-                  ))}
-              </select>
-            </div>
+/**
+ * Modal de mise en vente : on choisit la carte parmi celles possédées, avec
+ * son image et son nom (et non son identifiant technique).
+ */
+function SellModal({
+  inventory,
+  initialCardId,
+  onClose,
+}: {
+  inventory: InventoryCard[];
+  initialCardId: number | null;
+  onClose: () => void;
+}) {
+  const createListing = useCreateListing();
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#9CA3AF]">
-                Votre prix de vente
-              </label>
-              <input
-                type="number"
-                min={10}
-                step={10}
-                value={sellPrice}
-                onChange={(e) => setSellPrice(Number(e.target.value))}
-                className="w-full p-2.5 rounded-xl bg-[#181820] border border-white/15 font-black text-sm text-[#F59E0B]"
-              />
-            </div>
+  const owned = useMemo(
+    () => inventory.filter((c) => c.quantity > 0),
+    [inventory],
+  );
+  // Résolution (nom, image) mise en cache par carte : déjà faite ailleurs
+  // dans l'appli pour la plupart.
+  const resolved = useResolvedCards(owned);
 
-            <div className="rounded-xl bg-[#181820] border border-white/10 p-3.5 space-y-1.5 text-xs">
-              <div className="flex justify-between text-[#9CA3AF]">
-                <span>Prix payé par l'acheteur</span>
-                <span className="font-bold text-[#F3F4F6]">
-                  {grossPrice} Coins
-                </span>
-              </div>
-              <div className="flex justify-between text-[#9CA3AF]">
-                <span>Taxe du Marché ({TAX_PERCENT}%)</span>
-                <span className="font-bold text-[#E50914]">
-                  -{taxAmount} Coins
-                </span>
-              </div>
-              <div className="flex justify-between pt-1.5 border-t border-white/10 text-sm">
-                <span className="font-bold text-[#F3F4F6]">Vous recevrez</span>
-                <span className="font-black text-[#F59E0B]">
-                  {netSeller} Coins
-                </span>
-              </div>
-            </div>
+  const [cardId, setCardId] = useState<number | null>(
+    initialCardId ?? owned[0]?.cardId ?? null,
+  );
+  const [price, setPrice] = useState(100);
+  const [search, setSearch] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-            <p className="text-[11px] text-[#9CA3AF]">
-              🔒 Votre copie sera immédiatement réservée tant que l'annonce est
-              en ligne.
+  const entries = useMemo(
+    () =>
+      owned.map((card, idx) => ({
+        card,
+        name: resolved[idx]?.data?.name ?? null,
+        subtitle: resolved[idx]?.data?.subtitle ?? "",
+        imageUrl: resolved[idx]?.data?.imageUrl ?? null,
+      })),
+    [owned, resolved],
+  );
+
+  const selected = entries.find((e) => e.card.cardId === cardId) ?? null;
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return entries;
+    return entries.filter((e) => (e.name ?? "").toLowerCase().includes(q));
+  }, [entries, search]);
+
+  const grossPrice = Math.max(10, Math.round(price || 0));
+  const taxAmount = Math.ceil((grossPrice * TAX_PERCENT) / 100);
+  const netSeller = grossPrice - taxAmount;
+
+  function submit() {
+    if (!selected) return;
+    setError(null);
+    createListing
+      .mutateAsync({ cardId: selected.card.cardId, price })
+      .then(onClose)
+      .catch((err: Error) => setError(err.message));
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-[#121217] border border-white/15 p-5 space-y-4 shadow-2xl">
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-[11px] font-bold uppercase text-[#F59E0B]">
+              Marketplace • Taxe de vente {TAX_PERCENT}%
+            </span>
+            <h3 className="text-lg font-black text-[#F3F4F6]">
+              Mettre une carte en vente
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#9CA3AF] hover:text-white"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-[#9CA3AF]">
+            Carte à vendre
+          </label>
+
+          {owned.length === 0 ? (
+            <p className="p-3 rounded-xl bg-[#181820] border border-white/10 text-xs text-[#9CA3AF]">
+              Vous ne possédez aucune carte à vendre.
             </p>
+          ) : (
+            <>
+              {selected && (
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#181820] border border-[#F59E0B]/40">
+                  <div className="w-14 h-20 rounded-lg overflow-hidden bg-[#0B0B0E] shrink-0">
+                    {selected.imageUrl && (
+                      <img
+                        src={selected.imageUrl}
+                        alt={selected.name ?? ""}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-black text-[#F3F4F6] truncate">
+                      {selected.name ?? "Chargement..."}
+                    </div>
+                    <div className="text-[11px] text-[#9CA3AF] truncate">
+                      {TYPE_META[selected.card.type]?.emoji}{" "}
+                      {TYPE_META[selected.card.type]?.label}
+                      {selected.subtitle ? ` • ${selected.subtitle}` : ""}
+                    </div>
+                    <div className="text-[11px] text-[#9CA3AF] mt-0.5 capitalize">
+                      {selected.card.rarity} • Dispo : ×{selected.card.quantity}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            {actionError && (
-              <div className="p-3 rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 flex items-center gap-2 text-xs text-[#F3F4F6]">
-                <AlertCircle className="w-4 h-4 text-[#E50914] shrink-0" />
-                <span>{actionError}</span>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-[#9CA3AF] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher dans mes cartes..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#181820] border border-white/10 text-xs text-[#F3F4F6] placeholder-[#9CA3AF]/60 focus:outline-none focus:border-[#E50914]"
+                />
               </div>
-            )}
 
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setSellModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#181820] text-xs font-bold text-[#9CA3AF]"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                disabled={
-                  !sellCardId || !sellingCard || createListing.isPending
-                }
-                onClick={() =>
-                  runAction(
-                    createListing.mutateAsync({
-                      cardId: sellCardId!,
-                      price: sellPrice,
-                    }),
-                    () => setSellModalOpen(false),
-                  )
-                }
-                className="px-4 py-2.5 rounded-xl bg-[#E50914] hover:bg-[#f6121d] text-white text-xs font-black uppercase disabled:opacity-50"
-              >
-                Mettre en vente ({grossPrice} Coins)
-              </button>
-            </div>
+              <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                {visible.length === 0 ? (
+                  <p className="text-xs text-[#9CA3AF] py-3 text-center">
+                    Aucune carte ne correspond.
+                  </p>
+                ) : (
+                  visible.map((e) => {
+                    const isSelected = e.card.cardId === cardId;
+                    return (
+                      <button
+                        key={e.card.id}
+                        type="button"
+                        onClick={() => setCardId(e.card.cardId)}
+                        className={`w-full flex items-center gap-2.5 p-2 rounded-xl border text-left transition-colors ${
+                          isSelected
+                            ? "bg-[#F59E0B]/10 border-[#F59E0B]/60"
+                            : "bg-[#181820] border-white/[0.08] hover:border-white/25"
+                        }`}
+                      >
+                        <div className="w-9 h-12 rounded-md overflow-hidden bg-[#0B0B0E] shrink-0">
+                          {e.imageUrl && (
+                            <img
+                              src={e.imageUrl}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-[#F3F4F6] truncate">
+                            {e.name ?? "Chargement..."}
+                          </div>
+                          <div className="text-[10px] text-[#9CA3AF] capitalize truncate">
+                            {TYPE_META[e.card.type]?.label} • {e.card.rarity}
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-bold text-[#9CA3AF] shrink-0">
+                          ×{e.card.quantity}
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-[#9CA3AF]">
+            Votre prix de vente
+          </label>
+          <input
+            type="number"
+            min={10}
+            step={10}
+            value={price}
+            onChange={(e) => setPrice(Number(e.target.value))}
+            className="w-full p-2.5 rounded-xl bg-[#181820] border border-white/15 font-black text-sm text-[#F59E0B]"
+          />
+        </div>
+
+        <div className="rounded-xl bg-[#181820] border border-white/10 p-3.5 space-y-1.5 text-xs">
+          <div className="flex justify-between text-[#9CA3AF]">
+            <span>Prix payé par l'acheteur</span>
+            <span className="font-bold text-[#F3F4F6]">{grossPrice} Coins</span>
+          </div>
+          <div className="flex justify-between text-[#9CA3AF]">
+            <span>Taxe du Marché ({TAX_PERCENT}%)</span>
+            <span className="font-bold text-[#E50914]">-{taxAmount} Coins</span>
+          </div>
+          <div className="flex justify-between pt-1.5 border-t border-white/10 text-sm">
+            <span className="font-bold text-[#F3F4F6]">Vous recevrez</span>
+            <span className="font-black text-[#F59E0B]">{netSeller} Coins</span>
           </div>
         </div>
-      )}
+
+        <p className="text-[11px] text-[#9CA3AF]">
+          🔒 Votre copie sera immédiatement réservée tant que l'annonce est en
+          ligne.
+        </p>
+
+        {error && (
+          <div className="p-3 rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 flex items-center gap-2 text-xs text-[#F3F4F6]">
+            <AlertCircle className="w-4 h-4 text-[#E50914] shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-[#181820] text-xs font-bold text-[#9CA3AF]"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            disabled={!selected || createListing.isPending}
+            onClick={submit}
+            className="px-4 py-2.5 rounded-xl bg-[#E50914] hover:bg-[#f6121d] text-white text-xs font-black uppercase disabled:opacity-50"
+          >
+            Mettre en vente ({grossPrice} Coins)
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -34,6 +34,9 @@ export function useAddToSaleList() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["saleList"] });
+      // Les onglets Wishlist / À échanger de Ma Collection sont filtrés par
+      // le serveur : on rafraîchit le catalogue.
+      qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
     },
   });
 }
@@ -52,6 +55,9 @@ export function useRemoveFromSaleList() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["saleList"] });
+      // Les onglets Wishlist / À échanger de Ma Collection sont filtrés par
+      // le serveur : on rafraîchit le catalogue.
+      qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
     },
   });
 }

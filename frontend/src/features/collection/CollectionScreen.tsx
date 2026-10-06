@@ -7,6 +7,7 @@ import { CinemaCard } from "../../components/CinemaCard";
 import {
   useCardsCatalog,
   type CatalogCard,
+  type CatalogParams,
 } from "../inventory/useCardsCatalog";
 import { QuickSellModal } from "../inventory/QuickSellModal";
 import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
@@ -69,14 +70,6 @@ const RARITY_FILTERS: { id: RarityFilter; label: string }[] = [
   { id: "legendary", label: RARITY_CONFIG.legendary.label },
 ];
 
-const RARITY_ORDER: RarityKey[] = [
-  "legendary",
-  "epic",
-  "rare",
-  "uncommon",
-  "common",
-];
-
 interface ResolvedCatalogCard extends CatalogCard {
   name: string;
   subtitle: string;
@@ -87,8 +80,6 @@ interface ResolvedCatalogCard extends CatalogCard {
 
 export function CollectionScreen() {
   const navigate = useNavigate();
-  const { data: catalog = [], isLoading } = useCardsCatalog();
-
   const { data: wishlist = [] } = useWishlist();
   const addToWishlist = useAddToWishlist();
   const removeFromWishlist = useRemoveFromWishlist();
@@ -134,11 +125,36 @@ export function CollectionScreen() {
     null,
   );
 
-  // Résout nom/image/sous-titre de TOUT le catalogue en un seul appel réseau
-  // (les appels sont fusionnés en un batch, voir resolveCard.ts), pour
-  // pouvoir chercher/trier sur le nom avant la pagination.
+  // La recherche n'interroge le serveur qu'après une courte pause de frappe.
+  const [debouncedSearch, setDebouncedSearch] = useState(search.trim());
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Le serveur filtre, trie et pagine : on ne reçoit que la page affichée.
+  const params: CatalogParams = {
+    page,
+    perPage: PAGE_SIZE,
+    tab: subTab,
+    type: typeFilter === "ALL" ? undefined : typeFilter,
+    rarity: rarityFilter === "ALL" ? undefined : rarityFilter,
+    hideMissing,
+    search: debouncedSearch,
+    sort: sortBy,
+  };
+  const {
+    data: catalogPage,
+    isPending,
+    isPlaceholderData,
+  } = useCardsCatalog(params);
+
+  const catalogItems = useMemo(() => catalogPage?.items ?? [], [catalogPage]);
+
+  // Résout nom/image/sous-titre des cartes de la page (un seul appel réseau
+  // fusionné, voir resolveCard.ts ; les cartes déjà vues sont en cache).
   const resolvedResults = useResolvedCards(
-    catalog.map(
+    catalogItems.map(
       (c): CardRef => ({
         type: c.type,
         entityId: c.entityId,
@@ -147,9 +163,9 @@ export function CollectionScreen() {
     ),
   );
 
-  const allCards: ResolvedCatalogCard[] = useMemo(
+  const cards: ResolvedCatalogCard[] = useMemo(
     () =>
-      catalog.map((c, idx) => {
+      catalogItems.map((c, idx) => {
         const info = resolvedResults[idx]?.data;
         const meta = TYPE_META[c.type];
         return {
@@ -161,80 +177,33 @@ export function CollectionScreen() {
           typeLabel: meta.label,
         };
       }),
-    [catalog, resolvedResults],
+    [catalogItems, resolvedResults],
   );
 
-  const ownedCount = useMemo(
-    () => catalog.filter((c) => c.quantity > 0).length,
-    [catalog],
-  );
-  const totalCount = catalog.length;
+  const totalCount = catalogPage?.counts.all ?? 0;
+  const ownedCount = catalogPage?.counts.owned ?? 0;
   const overallPct =
     totalCount > 0 ? Math.round((ownedCount / totalCount) * 100) : 0;
 
-  const counts = useMemo(
-    () => ({
-      ALL: catalog.length,
-      OWNED: ownedCount,
-      MISSING: catalog.length - ownedCount,
-      DUPLICATES: catalog.filter((c) => c.quantity >= 2).length,
-      WISHLIST: wishlistedCardIds.size,
-      TRADELIST: saleListCardIds.size,
-    }),
-    [catalog, ownedCount, wishlistedCardIds, saleListCardIds],
-  );
+  const counts = {
+    ALL: totalCount,
+    OWNED: ownedCount,
+    MISSING: totalCount - ownedCount,
+    DUPLICATES: catalogPage?.counts.duplicates ?? 0,
+    WISHLIST: wishlistedCardIds.size,
+    TRADELIST: saleListCardIds.size,
+  };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+  const totalPages = catalogPage?.totalPages ?? 1;
 
-    const result = allCards.filter((c) => {
-      if (typeFilter !== "ALL" && c.type !== typeFilter) return false;
-      if (rarityFilter !== "ALL" && c.rarity !== rarityFilter) return false;
-      if (hideMissing && c.quantity === 0) return false;
-      if (subTab === "OWNED" && c.quantity === 0) return false;
-      if (subTab === "MISSING" && c.quantity > 0) return false;
-      if (subTab === "DUPLICATES" && c.quantity < 2) return false;
-      if (subTab === "WISHLIST" && !wishlistedCardIds.has(c.cardId))
-        return false;
-      if (subTab === "TRADELIST" && !saleListCardIds.has(c.cardId))
-        return false;
-      if (q && !c.name.toLowerCase().includes(q)) return false;
-      return true;
-    });
-
-    return [...result].sort((a, b) => {
-      if (sortBy === "NAME_ASC") return a.name.localeCompare(b.name);
-      if (sortBy === "RARITY_DESC")
-        return RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity);
-      // OWNED_FIRST (par défaut)
-      return (
-        (b.quantity > 0 ? 1 : 0) - (a.quantity > 0 ? 1 : 0) ||
-        a.name.localeCompare(b.name)
-      );
-    });
-  }, [
-    allCards,
-    typeFilter,
-    rarityFilter,
-    hideMissing,
-    subTab,
-    search,
-    sortBy,
-    wishlistedCardIds,
-    saleListCardIds,
-  ]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  // Revenir à la page 1 à chaque changement de filtre, ou si la page
-  // courante dépasse le nombre de pages disponibles (ex: après une vente).
-  // On ne remet la page à 0 que quand un filtre CHANGE vraiment (pas au
-  // montage, sinon on perdrait la page mémorisée en revenant d'une fiche).
+  // Revenir à la page 1 à chaque changement de filtre. On ne remet la page à
+  // 0 que quand un filtre CHANGE vraiment (pas au montage, sinon on perdrait
+  // la page mémorisée en revenant d'une fiche).
   const filterKey = [
     subTab,
     typeFilter,
     rarityFilter,
-    search,
+    debouncedSearch,
     hideMissing,
   ].join("|");
   const previousFilterKey = useRef(filterKey);
@@ -245,25 +214,22 @@ export function CollectionScreen() {
     }
   }, [filterKey, setPage]);
 
-  // Contenu prêt : catalogue chargé et noms résolus (sinon la liste filtrée
-  // est temporairement vide et la page serait ramenée à tort à 0).
+  // Contenu prêt : bonne page chargée (pas la page précédente gardée en
+  // attente) et noms résolus.
   const isReady =
-    !isLoading &&
-    catalog.length > 0 &&
+    !isPending &&
+    !isPlaceholderData &&
     resolvedResults.every((r) => !r.isPending);
 
+  // Le serveur ramène la page à la dernière existante si elle dépasse (ex:
+  // après une vente) : on s'aligne dessus.
   useEffect(() => {
-    if (isReady && page > totalPages - 1) {
-      setPage(Math.max(0, totalPages - 1));
+    if (!isPlaceholderData && catalogPage && catalogPage.page !== page) {
+      setPage(catalogPage.page);
     }
-  }, [isReady, page, totalPages, setPage]);
+  }, [isPlaceholderData, catalogPage, page, setPage]);
 
   useScrollRestoration("collection", isReady);
-
-  const cards = useMemo(
-    () => filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE),
-    [filtered, page],
-  );
 
   function goToDetail(card: ResolvedCatalogCard) {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
@@ -292,7 +258,7 @@ export function CollectionScreen() {
     setSellTarget(card);
   }
 
-  if (isLoading)
+  if (isPending)
     return <p className="text-[#9CA3AF]">Chargement de la collection...</p>;
 
   return (

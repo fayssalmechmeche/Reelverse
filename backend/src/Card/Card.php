@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'card')]
 #[ORM\UniqueConstraint(columns: ['type', 'entity_id'])]
+#[ORM\Index(name: 'idx_card_rarity', columns: ['rarity'])]
 class Card
 {
     #[ORM\Id]
