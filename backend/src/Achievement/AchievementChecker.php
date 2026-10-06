@@ -5,7 +5,7 @@ namespace App\Achievement;
 use App\Card\Card;
 use App\Card\Rarity;
 use App\Collection\CollectionService;
-use App\Economy\Wallet\Wallet;
+use App\Economy\Wallet\WalletService;
 use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Achievement\CardAcquisitionLog;
@@ -15,6 +15,7 @@ class AchievementChecker
     public function __construct(
         private EntityManagerInterface $em,
         private CollectionService $collectionService,
+        private WalletService $wallet,
     ) {}
 
     /**
@@ -75,15 +76,13 @@ class AchievementChecker
         $userAchievement->setUser($user);
         $userAchievement->setAchievement($achievement);
         $this->em->persist($userAchievement);
+        // Le succès est enregistré d'abord : si une requête parallèle l'a déjà débloqué,
+        // la contrainte unique échoue ici, avant le crédit de la récompense.
+        $this->em->flush();
 
         if ($achievement->getCoinsReward() > 0) {
-            $wallet = $this->em->getRepository(Wallet::class)->findOneBy(['user' => $user]);
-            if ($wallet) {
-                $wallet->credit($achievement->getCoinsReward());
-            }
+            $this->wallet->credit((int) $user->getId(), $achievement->getCoinsReward());
         }
-
-        $this->em->flush();
     }
 
     private function countCardsObtainedToday(User $user): int

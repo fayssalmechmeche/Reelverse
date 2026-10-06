@@ -4,13 +4,17 @@ namespace App\Quest;
 
 use App\Achievement\CardAcquisitionLog;
 use App\Card\Rarity;
-use App\Economy\Wallet\Wallet;
+use App\Economy\Wallet\WalletService;
 use App\User\User;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 
 class QuestService
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private WalletService $wallet,
+    ) {}
 
     /**
      * Liste toutes les quêtes avec la progression courante du joueur pour
@@ -67,19 +71,23 @@ class QuestService
             throw new \DomainException('Objectif pas encore atteint.');
         }
 
-        $wallet = $this->em->getRepository(Wallet::class)->findOneBy(['user' => $user]);
-        if (!$wallet) {
-            throw new \DomainException('Wallet introuvable pour l\'utilisateur.');
+        try {
+            $this->em->wrapInTransaction(function () use ($user, $quest, $periodKey) {
+                // L'enregistrement de la récupération passe en premier : si une requête
+                // parallèle l'a déjà inscrit, la contrainte unique fait échouer celle-ci
+                // avant tout crédit (la transaction est annulée).
+                $claim = new UserQuestClaim();
+                $claim->setUser($user);
+                $claim->setQuest($quest);
+                $claim->setPeriodKey($periodKey);
+                $this->em->persist($claim);
+                $this->em->flush();
+
+                $this->wallet->credit((int) $user->getId(), $quest->getCoinsReward());
+            });
+        } catch (UniqueConstraintViolationException) {
+            throw new \DomainException('Cette quête a déjà été récupérée pour cette période.');
         }
-
-        $claim = new UserQuestClaim();
-        $claim->setUser($user);
-        $claim->setQuest($quest);
-        $claim->setPeriodKey($periodKey);
-        $this->em->persist($claim);
-
-        $wallet->credit($quest->getCoinsReward());
-        $this->em->flush();
 
         return ['coinsReward' => $quest->getCoinsReward()];
     }

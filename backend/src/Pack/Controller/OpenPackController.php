@@ -7,6 +7,7 @@ use App\Pack\PackStock;
 use App\User\User;
 use App\Inventory\InventoryManager;
 use App\Inventory\UserCard;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -41,51 +42,59 @@ class OpenPackController
             return new JsonResponse(['error' => 'Aucun stock de packs trouvé pour cet utilisateur.'], 404);
         }
 
-        $stock->sync(new \DateTimeImmutable());
-
         try {
-            $cards = $this->opener->open($stock);
+            $payload = $this->em->wrapInTransaction(function () use ($user, $stock) {
+                // Relecture du stock avec verrou : plusieurs ouvertures simultanées
+                // sont traitées une par une et ne peuvent pas consommer le même pack.
+                $this->em->refresh($stock, LockMode::PESSIMISTIC_WRITE);
+                $stock->sync(new \DateTimeImmutable());
 
-            // "Nouvelle carte" doit refléter la possession AVANT ce tirage,
-            // pas juste "cette carte vient d'un pack" : on la résout ici,
-            // avant que addCard() n'incrémente les quantités.
-            $existingUserCards = count($cards) > 0
-                ? $this->em->getRepository(UserCard::class)->createQueryBuilder('uc')
-                ->where('uc.user = :user AND uc.card IN (:cards)')
-                ->setParameter('user', $user)
-                ->setParameter('cards', $cards)
-                ->getQuery()
-                ->getResult()
-                : [];
-            $ownedBeforeByCardId = [];
-            foreach ($existingUserCards as $uc) {
-                $ownedBeforeByCardId[$uc->getCard()->getId()] = $uc->getQuantity() > 0;
-            }
+                $cards = $this->opener->open($stock);
 
-            $seenThisPack = [];
-            $isNewByCardId = [];
-            foreach ($cards as $card) {
-                $wasOwnedBefore = $ownedBeforeByCardId[$card->getId()] ?? false;
-                $isNewByCardId[$card->getId()] = !$wasOwnedBefore && !isset($seenThisPack[$card->getId()]);
-                $seenThisPack[$card->getId()] = true;
+                // "Nouvelle carte" doit refléter la possession AVANT ce tirage,
+                // pas juste "cette carte vient d'un pack" : on la résout ici,
+                // avant que addCard() n'incrémente les quantités.
+                $existingUserCards = count($cards) > 0
+                    ? $this->em->getRepository(UserCard::class)->createQueryBuilder('uc')
+                    ->where('uc.user = :user AND uc.card IN (:cards)')
+                    ->setParameter('user', $user)
+                    ->setParameter('cards', $cards)
+                    ->getQuery()
+                    ->getResult()
+                    : [];
+                $ownedBeforeByCardId = [];
+                foreach ($existingUserCards as $uc) {
+                    $ownedBeforeByCardId[$uc->getCard()->getId()] = $uc->getQuantity() > 0;
+                }
 
-                $this->inventory->addCard($user, $card);
-            }
+                $seenThisPack = [];
+                $isNewByCardId = [];
+                foreach ($cards as $card) {
+                    $wasOwnedBefore = $ownedBeforeByCardId[$card->getId()] ?? false;
+                    $isNewByCardId[$card->getId()] = !$wasOwnedBefore && !isset($seenThisPack[$card->getId()]);
+                    $seenThisPack[$card->getId()] = true;
+
+                    $this->inventory->addCard($user, $card);
+                }
+
+                $this->achievementChecker->onCardsObtained($user, $cards);
+                $this->em->flush();
+
+                return [
+                    'cards' => array_map(fn($c) => [
+                        'id' => $c->getId(),
+                        'type' => $c->getType()->value,
+                        'entityId' => $c->getEntityId(),
+                        'rarity' => $c->getRarity()->value,
+                        'isNew' => $isNewByCardId[$c->getId()] ?? false,
+                    ], $cards),
+                    'remainingPacks' => $stock->getStoredPacks(),
+                ];
+            });
         } catch (\DomainException $e) {
             return new JsonResponse(['error' => $e->getMessage()], 400);
         }
-        $this->achievementChecker->onCardsObtained($user, $cards);
-        $this->em->flush();
 
-        return new JsonResponse([
-            'cards' => array_map(fn($c) => [
-                'id' => $c->getId(),
-                'type' => $c->getType()->value,
-                'entityId' => $c->getEntityId(),
-                'rarity' => $c->getRarity()->value,
-                'isNew' => $isNewByCardId[$c->getId()] ?? false,
-            ], $cards),
-            'remainingPacks' => $stock->getStoredPacks(),
-        ]);
+        return new JsonResponse($payload);
     }
 }

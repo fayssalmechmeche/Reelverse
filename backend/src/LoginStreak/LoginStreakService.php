@@ -2,8 +2,9 @@
 
 namespace App\LoginStreak;
 
-use App\Economy\Wallet\Wallet;
+use App\Economy\Wallet\WalletService;
 use App\User\User;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
 class LoginStreakService
@@ -19,7 +20,10 @@ class LoginStreakService
         7 => 750,
     ];
 
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private WalletService $wallet,
+    ) {}
 
     public function getStatus(User $user): array
     {
@@ -41,25 +45,26 @@ class LoginStreakService
     public function claim(User $user): array
     {
         $streak = $this->getOrCreate($user);
-        [$day, $claimable] = $this->computeCurrentState($streak);
 
-        if (!$claimable) {
-            throw new \DomainException('La récompense du jour a déjà été récupérée.');
-        }
+        return $this->em->wrapInTransaction(function () use ($user, $streak) {
+            // Relecture avec verrou : deux récupérations simultanées sont traitées une par une,
+            // la seconde voit déjà la récompense du jour récupérée.
+            $this->em->refresh($streak, LockMode::PESSIMISTIC_WRITE);
+            [$day, $claimable] = $this->computeCurrentState($streak);
 
-        $wallet = $this->em->getRepository(Wallet::class)->findOneBy(['user' => $user]);
-        if (!$wallet) {
-            throw new \DomainException('Wallet introuvable pour l\'utilisateur.');
-        }
+            if (!$claimable) {
+                throw new \DomainException('La récompense du jour a déjà été récupérée.');
+            }
 
-        $reward = self::REWARDS[$day];
-        $wallet->credit($reward);
+            $reward = self::REWARDS[$day];
+            $this->wallet->credit((int) $user->getId(), $reward);
 
-        $streak->setCurrentDay($day);
-        $streak->setLastClaimedAt(new \DateTimeImmutable('today'));
-        $this->em->flush();
+            $streak->setCurrentDay($day);
+            $streak->setLastClaimedAt(new \DateTimeImmutable('today'));
+            $this->em->flush();
 
-        return ['day' => $day, 'coinsReward' => $reward];
+            return ['day' => $day, 'coinsReward' => $reward];
+        });
     }
 
     private function getOrCreate(User $user): LoginStreak

@@ -28,12 +28,13 @@ class CreateListingController
             return new JsonResponse(['error' => 'Authentification requise.'], 401);
         }
 
-        $data = json_decode($request->getContent(), true) ?? [];
+        $data = json_decode($request->getContent(), true);
+        $data = is_array($data) ? $data : [];
         $cardId = $data['cardId'] ?? null;
         $price = $data['price'] ?? null;
 
-        if (!$cardId || !$price) {
-            return new JsonResponse(['error' => 'cardId et price requis.'], 400);
+        if (!is_int($cardId) || !is_int($price)) {
+            return new JsonResponse(['error' => 'cardId et price requis (nombres entiers).'], 400);
         }
 
         try {

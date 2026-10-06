@@ -29,12 +29,17 @@ class ProposeTradeController
             return new JsonResponse(['error' => 'Authentification requise.'], 401);
         }
 
-        $data = json_decode($request->getContent(), true) ?? [];
+        $data = json_decode($request->getContent(), true);
+        $data = is_array($data) ? $data : [];
         $recipientId = $data['recipientId'] ?? null;
         $myCards = $data['myCards'] ?? [];
         $theirCards = $data['theirCards'] ?? [];
 
-        $recipient = $recipientId ? $this->em->getRepository(User::class)->find($recipientId) : null;
+        if (!is_int($recipientId) || !$this->isIdList($myCards) || !$this->isIdList($theirCards)) {
+            return new JsonResponse(['error' => 'Requête invalide.'], 400);
+        }
+
+        $recipient = $this->em->getRepository(User::class)->find($recipientId);
         if (!$recipient) {
             return new JsonResponse(['error' => 'Destinataire introuvable.'], 404);
         }
@@ -46,5 +51,21 @@ class ProposeTradeController
         }
 
         return new JsonResponse(['id' => $trade->getId()], 201);
+    }
+
+    /** Une liste (pas un objet) d'entiers positifs. */
+    private function isIdList(mixed $value): bool
+    {
+        if (!is_array($value) || !array_is_list($value)) {
+            return false;
+        }
+
+        foreach ($value as $id) {
+            if (!is_int($id) || $id < 1) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

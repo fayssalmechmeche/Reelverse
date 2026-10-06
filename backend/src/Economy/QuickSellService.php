@@ -2,7 +2,7 @@
 
 namespace App\Economy;
 
-use App\Economy\Wallet\Wallet;
+use App\Economy\Wallet\WalletService;
 use App\Inventory\UserCard;
 use App\User\User;
 use Doctrine\DBAL\LockMode;
@@ -13,6 +13,7 @@ class QuickSellService
     public function __construct(
         private EntityManagerInterface $em,
         private QuickSellPricing $pricing,
+        private WalletService $wallet,
     ) {}
 
     public function sell(User $user, int $userCardId, int $quantity = 1): int
@@ -22,14 +23,13 @@ class QuickSellService
         }
 
         return $this->em->wrapInTransaction(function () use ($user, $userCardId, $quantity) {
-            $userCard = $this->em->getRepository(UserCard::class)->find($userCardId);
+            // Chargement AVEC verrou : la quantité lue est celle d'après toute vente concurrente.
+            // (EntityManager::lock() seul ne relit pas l'entité et laisserait passer une double vente.)
+            $userCard = $this->em->find(UserCard::class, $userCardId, LockMode::PESSIMISTIC_WRITE);
 
             if (!$userCard || $userCard->getUser()->getId() !== $user->getId()) {
                 throw new \DomainException('Carte introuvable dans votre inventaire.');
             }
-
-            // Verrou pessimiste : empêche deux ventes simultanées de consommer la même quantité
-            $this->em->lock($userCard, LockMode::PESSIMISTIC_WRITE);
 
             $rarity = $userCard->getCard()->getRarity();
             $unitPrice = $this->pricing->priceFor($rarity);
@@ -37,11 +37,7 @@ class QuickSellService
 
             $userCard->removeQuantity($quantity); // lève déjà une exception si quantité insuffisante
 
-            $wallet = $this->em->getRepository(Wallet::class)->findOneBy(['user' => $user]);
-            if (!$wallet) {
-                throw new \DomainException('Wallet introuvable.');
-            }
-            $wallet->credit($totalPrice);
+            $this->wallet->credit((int) $user->getId(), $totalPrice);
 
             $this->em->flush();
 

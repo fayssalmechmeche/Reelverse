@@ -28,8 +28,13 @@ class QuickSellController
             return new JsonResponse(['error' => 'Authentification requise.'], 401);
         }
 
-        $data = json_decode($request->getContent(), true) ?? [];
+        $data = json_decode($request->getContent(), true);
+        $data = is_array($data) ? $data : [];
         $quantity = $data['quantity'] ?? 1;
+
+        if (!is_int($quantity) || $quantity < 1 || $quantity > 100000) {
+            return new JsonResponse(['error' => 'Quantité invalide.'], 400);
+        }
 
         try {
             $earned = $this->quickSellService->sell($user, $id, $quantity);
