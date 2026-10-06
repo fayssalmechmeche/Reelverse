@@ -49,14 +49,12 @@ export function CinemaCard({
           : "border border-white/[0.04] hover:border-white/15 hover:-translate-y-0.5 opacity-70 hover:opacity-95"
       }`}
     >
-      <div
-        className={`relative ${compact ? "h-28 sm:h-44" : "h-56"} w-full overflow-hidden bg-[#0B0B0E]`}
-      >
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-[#0B0B0E]">
         {imageUrl && (
           <img
             src={imageUrl}
             alt={name}
-            className={`h-full w-full object-cover object-center transition-all duration-500 group-hover:scale-105 ${
+            className={`h-full w-full object-cover object-top transition-all duration-500 group-hover:scale-105 ${
               isOwned
                 ? ""
                 : "grayscale saturate-0 contrast-75 opacity-35 group-hover:opacity-55"

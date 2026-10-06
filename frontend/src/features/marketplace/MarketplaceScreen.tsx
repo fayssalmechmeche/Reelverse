@@ -383,12 +383,12 @@ export function MarketplaceScreen() {
                   onClick={() => setSelectedCardId(cardId)}
                   className="group rounded-xl bg-[#181820] border border-white/[0.08] hover:border-white/25 transition-all overflow-hidden flex flex-col justify-between cursor-pointer shadow-[0_6px_20px_rgba(0,0,0,0.5)]"
                 >
-                  <div className="relative h-52 w-full overflow-hidden bg-[#0B0B0E]">
+                  <div className="relative aspect-[2/3] w-full overflow-hidden bg-[#0B0B0E]">
                     {info.imageUrl && (
                       <img
                         src={info.imageUrl}
                         alt={info.name}
-                        className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        className="h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                       />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#181820] via-[#181820]/20 to-black/40" />

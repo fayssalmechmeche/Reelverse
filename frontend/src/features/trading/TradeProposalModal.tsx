@@ -236,13 +236,13 @@ export function TradeProposalModal({
             : "bg-[#181820] border border-white/10 hover:border-white/25"
         }`}
       >
-        <div className="relative w-full h-40 sm:h-48 shrink-0 overflow-hidden bg-[#0B0B0E]">
+        <div className="relative w-full aspect-[2/3] shrink-0 overflow-hidden bg-[#0B0B0E]">
           {info?.imageUrl && (
             <img
               src={info.imageUrl}
               alt={info.name}
               loading="lazy"
-              className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500 block"
+              className="h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-500 block"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#181820] via-transparent to-black/55" />
