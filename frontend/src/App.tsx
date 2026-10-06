@@ -14,6 +14,11 @@ import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { CollectionScreen } from "./features/collection/CollectionScreen";
 import { MarketplaceScreen } from "./features/marketplace/MarketplaceScreen";
 import { PlayerProfileScreen } from "./features/playerProfile/PlayerProfileScreen";
+import {
+  LegalNoticePage,
+  PrivacyPage,
+  TermsPage,
+} from "./features/legal/LegalPages";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -32,6 +37,9 @@ function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/legal" element={<LegalNoticePage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       {isAuthenticated ? (
         <>
           <Route

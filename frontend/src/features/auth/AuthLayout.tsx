@@ -1,4 +1,6 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { LegalLinks, TmdbAttribution } from "../legal/LegalPages";
 
 const PREVIEW_CARDS = {
   left: {
@@ -155,6 +157,28 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <div className="lg:col-span-6 max-w-md w-full mx-auto">
           <div className="rounded-3xl bg-[#121217] border border-white/[0.08] p-5 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.85)] space-y-5">
             {children}
+          </div>
+
+          <div className="mt-4 space-y-3 text-center">
+            <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+              En vous connectant ou en créant un compte, vous acceptez les{" "}
+              <Link
+                to="/terms"
+                className="text-[#F3F4F6] underline hover:text-white"
+              >
+                conditions d’utilisation
+              </Link>{" "}
+              et la{" "}
+              <Link
+                to="/privacy"
+                className="text-[#F3F4F6] underline hover:text-white"
+              >
+                politique de confidentialité
+              </Link>
+              , et confirmez avoir au moins 16 ans.
+            </p>
+            <LegalLinks className="justify-center" />
+            <TmdbAttribution />
           </div>
         </div>
       </div>

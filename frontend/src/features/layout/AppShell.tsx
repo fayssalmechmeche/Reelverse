@@ -16,6 +16,7 @@ import { usePackStock } from "../packs/usePacks";
 import { useFriendsData } from "../social/useFriends";
 import { DailyRewardPopup } from "../loginStreak/DailyRewardPopup";
 import { useClaimableRewards } from "../quests/useClaimableRewards";
+import { LegalLinks, TmdbAttribution } from "../legal/LegalPages";
 
 function formatSecondsMMSS(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -178,6 +179,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
 
+      {/* PIED DE PAGE LÉGAL */}
+      <footer className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 space-y-2 border-t border-white/[0.06] pt-5">
+        <LegalLinks />
+        <TmdbAttribution />
+      </footer>
+
       {/* BARRE DE NAVIGATION INFÉRIEURE MOBILE */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#121217]/95 backdrop-blur-md border-t border-white/10 px-1.5 py-2 flex items-center justify-around">
         {NAV_ITEMS.map((item) => {
@@ -189,9 +196,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.path}
               to={item.path}
               className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors ${
-                isActive
-                  ? "text-[#E50914]"
-                  : "text-[#9CA3AF] hover:text-[#F3F4F6]"
+                isActive ? "text-[#E50914]" : "text-[#9CA3AF] hover:text-[#F3F4F6]"
               }`}
             >
               <div className="relative">

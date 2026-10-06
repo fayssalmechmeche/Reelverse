@@ -10,6 +10,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -21,6 +22,11 @@ export function RegisterPage() {
 
     if (password !== confirmPassword) {
       setError("Les deux mots de passe ne correspondent pas.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError("Vous devez accepter les conditions pour créer un compte.");
       return;
     }
 
@@ -178,9 +184,38 @@ export function RegisterPage() {
           </div>
         </div>
 
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            required
+            className="mt-0.5 w-4 h-4 shrink-0 accent-[#E50914]"
+          />
+          <span className="text-[11px] text-[#9CA3AF] leading-relaxed">
+            J’ai au moins 16 ans et j’accepte les{" "}
+            <Link
+              to="/terms"
+              target="_blank"
+              className="text-[#F3F4F6] underline hover:text-white"
+            >
+              conditions d’utilisation
+            </Link>{" "}
+            ainsi que la{" "}
+            <Link
+              to="/privacy"
+              target="_blank"
+              className="text-[#F3F4F6] underline hover:text-white"
+            >
+              politique de confidentialité
+            </Link>
+            .
+          </span>
+        </label>
+
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !acceptedTerms}
           className="w-full py-3 px-4 rounded-xl bg-[#E50914] hover:bg-[#f6121d] border-b-4 border-red-950 active:translate-y-0.5 text-white font-black text-xs uppercase tracking-wider transition-all shadow-lg disabled:opacity-50"
         >
           {isSubmitting
