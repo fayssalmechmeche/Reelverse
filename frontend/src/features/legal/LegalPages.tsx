@@ -5,7 +5,7 @@ import { Link, NavLink } from "react-router-dom";
 // À COMPLÉTER avant la mise en ligne : tout ce qui est entre [crochets] ci-dessous.
 // ---------------------------------------------------------------------------
 const SITE_NAME = "Reelverse";
-const EDITOR_PSEUDO = "Reelverse (pseudonyme de l’éditeur)";
+const EDITOR_PSEUDO = "[Ton pseudonyme d’éditeur]";
 const CONTACT_EMAIL = "contact@reelverse.me";
 const HOST_NAME = "Vercel Inc.";
 const HOST_ADDRESS = "340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis";
@@ -129,12 +129,22 @@ function ExternalLink({
 
 export function TmdbAttribution({ className = "" }: { className?: string }) {
   return (
-    <p className={`text-[11px] text-[#9CA3AF] leading-relaxed ${className}`}>
-      Ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par{" "}
-      <ExternalLink href="https://www.themoviedb.org">TMDB</ExternalLink>. Les
-      affiches et photos proviennent de TMDB et appartiennent à leurs ayants
-      droit.
-    </p>
+    <div className={className}>
+      <a
+        href="https://www.themoviedb.org"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block mb-1.5"
+      >
+        <img src="/tmdb-logo.svg" alt="TMDB" className="h-3" />
+      </a>
+      <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+        Ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par{" "}
+        <ExternalLink href="https://www.themoviedb.org">TMDB</ExternalLink>. Les
+        affiches et photos proviennent de TMDB et appartiennent à leurs ayants
+        droit.
+      </p>
+    </div>
   );
 }
 
