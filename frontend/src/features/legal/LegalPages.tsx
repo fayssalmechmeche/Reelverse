@@ -5,13 +5,13 @@ import { Link, NavLink } from "react-router-dom";
 // À COMPLÉTER avant la mise en ligne : tout ce qui est entre [crochets] ci-dessous.
 // ---------------------------------------------------------------------------
 const SITE_NAME = "Reelverse";
-const EDITOR_PSEUDO = "[Ton pseudonyme d’éditeur]";
-const CONTACT_EMAIL = "[adresse e-mail de contact]";
-const HOST_NAME = "[Nom de l’hébergeur]";
-const HOST_ADDRESS = "[Adresse de l’hébergeur]";
-const HOST_CONTACT = "[Site ou téléphone de l’hébergeur]";
+const EDITOR_PSEUDO = "Reelverse (pseudonyme de l’éditeur)";
+const CONTACT_EMAIL = "contact@reelverse.me";
+const HOST_NAME = "Vercel Inc.";
+const HOST_ADDRESS = "340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis";
+const HOST_CONTACT = "https://vercel.com";
 const MIN_AGE = 16;
-const LAST_UPDATE = "6 octobre 2026";
+const LAST_UPDATE = "7 octobre 2026";
 
 const NAV_LINKS = [
   { to: "/legal", label: "Mentions légales" },
@@ -171,8 +171,14 @@ export function LegalNoticePage() {
 
       <Section title="Hébergeur">
         <p>
-          Le site est hébergé par <strong>{HOST_NAME}</strong>, {HOST_ADDRESS}.{" "}
-          {HOST_CONTACT}.
+          Le site (interface web) est hébergé par <strong>{HOST_NAME}</strong>,{" "}
+          {HOST_ADDRESS}. {HOST_CONTACT}.
+        </p>
+        <p>
+          Le serveur applicatif et la base de données sont exploités par
+          l’éditeur. Le trafic vers ce serveur et la gestion du nom de domaine
+          passent par Cloudflare, Inc., 101 Townsend Street, San Francisco, CA
+          94107, États-Unis (https://www.cloudflare.com).
         </p>
         <p>
           L’éditeur, qui agit à titre non professionnel, a communiqué son
@@ -284,7 +290,11 @@ export function PrivacyPage() {
       <Section title="Qui reçoit vos données ?">
         <List
           items={[
-            <>L’hébergeur du site : {HOST_NAME}.</>,
+            <>L’hébergeur du site : {HOST_NAME}</>,
+            <>
+              Cloudflare, qui assure le transit du trafic et la gestion du nom
+              de domaine.
+            </>,
             <>
               Google et Discord, uniquement si vous choisissez de vous connecter
               avec eux, selon leurs propres politiques de confidentialité.
@@ -303,6 +313,16 @@ export function PrivacyPage() {
           Les autres joueurs voient votre pseudo, votre photo de profil et les
           informations de jeu que vous rendez publiques (collection, vitrine,
           annonces).
+        </p>
+      </Section>
+
+      <Section title="Transferts hors de l’Union européenne">
+        <p>
+          Vercel et Cloudflare sont des sociétés américaines : certaines données
+          techniques (par exemple votre adresse IP) peuvent être traitées aux
+          États-Unis. Ces transferts s’appuient sur les garanties prévues par le
+          RGPD, notamment les clauses contractuelles types de la Commission
+          européenne ou le Data Privacy Framework, selon les cas.
         </p>
       </Section>
 
