@@ -17,6 +17,27 @@ async function fetchListings(): Promise<ListingData[]> {
   return res.json();
 }
 
+export interface PriceHistoryEntry {
+  price: number;
+  soldAt: string;
+}
+
+/** Derniers prix de vente d'une carte (les plus récents d'abord). */
+export function useCardPriceHistory(cardId: number | null) {
+  return useQuery({
+    queryKey: ["marketplace", "history", cardId],
+    queryFn: async (): Promise<PriceHistoryEntry[]> => {
+      const res = await fetch(`/api/marketplace/cards/${cardId}/history`, {
+        credentials: "include",
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: cardId !== null,
+    staleTime: 30_000,
+  });
+}
+
 export function useMarketplaceListings() {
   return useQuery({
     queryKey: ["marketplace", "listings"],
@@ -27,6 +48,7 @@ export function useMarketplaceListings() {
 
 function invalidateAfterTrade(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["marketplace", "listings"] });
+  qc.invalidateQueries({ queryKey: ["marketplace", "history"] });
   qc.invalidateQueries({ queryKey: ["inventory"] });
   qc.invalidateQueries({ queryKey: ["cardsCatalog"] });
 }

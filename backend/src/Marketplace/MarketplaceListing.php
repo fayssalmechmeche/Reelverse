@@ -32,6 +32,10 @@ class MarketplaceListing
     #[ORM\Column]
     private bool $sold = false;
 
+    /** Date de la vente (null pour les ventes antérieures à l'ajout de ce champ). */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $soldAt = null;
+
     #[ORM\Column]
     private bool $cancelled = false;
 
@@ -87,7 +91,13 @@ class MarketplaceListing
     public function markAsSold(): static
     {
         $this->sold = true;
+        $this->soldAt = new \DateTimeImmutable();
         return $this;
+    }
+
+    public function getSoldAt(): ?\DateTimeImmutable
+    {
+        return $this->soldAt;
     }
 
     public function isCancelled(): bool
