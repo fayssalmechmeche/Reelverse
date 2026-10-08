@@ -13,3 +13,5 @@
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
 /config/jwt/
+
+race-test.sh

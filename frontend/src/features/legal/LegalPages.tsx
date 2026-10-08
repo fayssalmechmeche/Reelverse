@@ -5,7 +5,7 @@ import { Link, NavLink } from "react-router-dom";
 // À COMPLÉTER avant la mise en ligne : tout ce qui est entre [crochets] ci-dessous.
 // ---------------------------------------------------------------------------
 const SITE_NAME = "Reelverse";
-const EDITOR_PSEUDO = "[Ton pseudonyme d’éditeur]";
+const EDITOR_PSEUDO = "Reelverse (pseudonyme de l’éditeur)";
 const CONTACT_EMAIL = "contact@reelverse.me";
 const HOST_NAME = "Vercel Inc.";
 const HOST_ADDRESS = "340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis";
