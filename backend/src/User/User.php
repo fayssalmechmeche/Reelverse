@@ -27,6 +27,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?string $avatar = null;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $bannedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?string $banReason = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -77,6 +83,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->avatar
             ? sprintf('/api/users/%d/avatar?v=%s', $this->id, $this->avatar)
             : null;
+    }
+
+    public function isBanned(): bool
+    {
+        return $this->bannedAt !== null;
+    }
+
+    public function getBannedAt(): ?\DateTimeImmutable
+    {
+        return $this->bannedAt;
+    }
+
+    public function getBanReason(): ?string
+    {
+        return $this->banReason;
+    }
+
+    public function ban(?string $reason = null): static
+    {
+        $this->bannedAt = new \DateTimeImmutable();
+        $this->banReason = $reason !== null ? mb_substr($reason, 0, 255) : null;
+        return $this;
+    }
+
+    public function unban(): static
+    {
+        $this->bannedAt = null;
+        $this->banReason = null;
+        return $this;
     }
 
     public function getUserIdentifier(): string

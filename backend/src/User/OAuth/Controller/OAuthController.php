@@ -11,9 +11,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
-use App\User\OAuth\OAuthLoginException;
 use App\User\OAuth\OAuthProviderFactory;
 use App\User\OAuth\OAuthUserResolver;
+use App\User\OAuth\OAuthLoginException;
 
 #[AsController]
 class OAuthController
@@ -95,6 +95,11 @@ class OAuthController
             $this->logger->error('OAuth login failed', ['provider' => $provider, 'exception' => $e]);
 
             return $this->clearState($this->errorRedirect('oauth_failed'));
+        }
+
+        // Ce parcours ne passe pas par le firewall : on bloque les comptes bannis ici.
+        if ($user->isBanned()) {
+            return $this->clearState($this->errorRedirect('account_banned'));
         }
 
         $response = new RedirectResponse(rtrim($this->frontendUrl, '/') . '/');
