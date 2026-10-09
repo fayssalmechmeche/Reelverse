@@ -25,7 +25,13 @@ class PackOpener
         $drawn = [];
         $usedIds = [];
 
+        $attempts = 0;
         while (count($drawn) < PackDrawConfig::CARDS_PER_PACK) {
+            // Garde-fou : sans cartes disponibles, on ne boucle pas indefiniment.
+            if (++$attempts > 100) {
+                throw new \DomainException('Impossible de tirer des cartes : catalogue insuffisant.');
+            }
+
             $rarity = $this->config->drawRarity();
             $card = $this->drawer->pickRandomCard($rarity, $usedIds);
 
