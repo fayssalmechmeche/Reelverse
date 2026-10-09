@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'shop')]
+#[ORM\UniqueConstraint(name: 'uniq_shop_user_date', columns: ['user_id', 'for_date'])]
 class Shop
 {
     #[ORM\Id]
