@@ -1,0 +1,40 @@
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock symfony.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+
+FROM dunglas/frankenphp:1-php8.4 AS app
+
+RUN install-php-extensions pdo_pgsql intl opcache redis
+
+RUN { \
+    echo 'opcache.enable=1'; \
+    echo 'opcache.memory_consumption=128'; \
+    echo 'opcache.interned_strings_buffer=16'; \
+    echo 'opcache.max_accelerated_files=20000'; \
+    echo 'opcache.validate_timestamps=0'; \
+    } > /usr/local/etc/php/conf.d/zz-opcache.ini
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+
+WORKDIR /app
+
+COPY --from=vendor /app/vendor ./vendor
+COPY . .
+COPY docker/Caddyfile /etc/frankenphp/Caddyfile
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN composer dump-autoload --no-dev --classmap-authoritative --no-scripts \
+    && chmod +x /usr/local/bin/entrypoint.sh \
+    && useradd --system --create-home appuser \
+    && mkdir -p var/uploads/avatars config/jwt /config/caddy /data/caddy \
+    && chown -R appuser:appuser /app/var /config/caddy /data/caddy
+
+USER appuser
+
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

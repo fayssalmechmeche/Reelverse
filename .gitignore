@@ -1,2 +1,5 @@
 cookies.txt
 cookies2.txt
+.env.prod
+secrets/
+data/

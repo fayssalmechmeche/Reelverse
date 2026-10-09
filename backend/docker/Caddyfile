@@ -1,0 +1,18 @@
+{
+	frankenphp
+	auto_https off
+}
+
+:8080 {
+	root * /app/public
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	php_server
+}

@@ -10,3 +10,7 @@ api_platform:
     docs_formats:
         jsonld: ['application/ld+json']
         html: ['text/html']
+
+when@prod:
+    api_platform:
+        enable_docs: false
