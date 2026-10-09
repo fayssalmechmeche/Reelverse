@@ -23,7 +23,7 @@ services:
       -c checkpoint_timeout=15min
       -c max_wal_size=1GB
     volumes:
-        - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U reelverse -d reelverse"]
       interval: 10s
@@ -53,10 +53,7 @@ services:
     logging: *logging
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
-    image: reelverse-backend:prod
+    image: ghcr.io/fayssalmechmeche/reelverse-backend:latest
     restart: unless-stopped
     depends_on:
       postgres:
