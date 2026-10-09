@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="dark">
+        <meta name="supported-color-schemes" content="dark">
+        <title>{% block title %}Reelverse{% endblock %}</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#0B0B0E;">
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#0B0B0E;">
+            {% block preheader %}{% endblock %}
+        </div>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0B0B0E" style="background-color:#0B0B0E;">
+            <tr>
+                <td align="center" style="padding:32px 16px;">
+
+                    <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
+
+                        <!-- En-tete -->
+                        <tr>
+                            <td align="center" style="padding:0 0 24px 0;">
+                                <img src="{{ logoUrl }}" width="56" height="56" alt="Reelverse" style="display:block;border:0;border-radius:14px;margin:0 auto 12px auto;">
+                                <span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#F3F4F6;">REELVERSE</span>
+                            </td>
+                        </tr>
+
+                        <!-- Carte -->
+                        <tr>
+                            <td bgcolor="#121217" style="background-color:#121217;border:1px solid #26262F;border-radius:20px;overflow:hidden;">
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                    <tr>
+                                        <td height="4" bgcolor="#E50914" style="height:4px;line-height:4px;font-size:0;background-color:#E50914;">&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:36px 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#F3F4F6;">
+                                            {% block content %}{% endblock %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- Pied -->
+                        <tr>
+                            <td align="center" style="padding:24px 16px 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#9CA3AF;">
+                                Reelverse, le jeu de cartes de collection du cinéma.<br>
+                                Une question ? Écris-nous à
+                                <a href="mailto:contact@reelverse.me" style="color:#F59E0B;text-decoration:none;">contact@reelverse.me</a>
+                            </td>
+                        </tr>
+                    </table>
+
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>

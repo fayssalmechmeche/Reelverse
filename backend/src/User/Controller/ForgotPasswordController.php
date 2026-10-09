@@ -2,17 +2,13 @@
 
 namespace App\User\Controller;
 
+use App\Shared\Mail\TransactionalMailer;
 use App\User\Dto\ForgotPasswordRequest;
 use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
@@ -23,12 +19,7 @@ class ForgotPasswordController
     public function __construct(
         private EntityManagerInterface $em,
         private ResetPasswordHelperInterface $resetPasswordHelper,
-        private MailerInterface $mailer,
-        private LoggerInterface $logger,
-        #[Autowire('%env(FRONTEND_URL)%')]
-        private string $frontendUrl,
-        #[Autowire('%env(MAILER_FROM)%')]
-        private string $mailerFrom,
+        private TransactionalMailer $mailer,
     ) {}
 
     #[Route('/api/forgot-password', name: 'api_forgot_password', methods: ['POST'])]
@@ -58,30 +49,7 @@ class ForgotPasswordController
             return $response;
         }
 
-        $link = rtrim($this->frontendUrl, '/') . '/reset-password/' . $token->getToken();
-
-        $email = (new Email())
-            ->from($this->mailerFrom)
-            ->to($user->getEmail())
-            ->subject('Reelverse : réinitialisation de ton mot de passe')
-            ->text(
-                "Bonjour {$user->getPseudo()},\n\n"
-                    . "Tu as demandé à réinitialiser ton mot de passe. Clique sur ce lien (valable 1 heure) :\n\n"
-                    . "{$link}\n\n"
-                    . "Si tu n'es pas à l'origine de cette demande, ignore simplement cet e-mail."
-            )
-            ->html(
-                '<p>Bonjour ' . htmlspecialchars($user->getPseudo(), ENT_QUOTES) . ',</p>'
-                    . '<p>Tu as demandé à réinitialiser ton mot de passe. Ce lien est valable 1 heure :</p>'
-                    . '<p><a href="' . htmlspecialchars($link, ENT_QUOTES) . '">Réinitialiser mon mot de passe</a></p>'
-                    . "<p>Si tu n'es pas à l'origine de cette demande, ignore simplement cet e-mail.</p>"
-            );
-
-        try {
-            $this->mailer->send($email);
-        } catch (TransportExceptionInterface $e) {
-            $this->logger->error('Envoi du mail de réinitialisation impossible : ' . $e->getMessage());
-        }
+        $this->mailer->sendPasswordReset($user, $token->getToken());
 
         return $response;
     }

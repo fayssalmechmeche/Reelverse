@@ -2,6 +2,7 @@
 
 namespace App\User\Controller;
 
+use App\Shared\Mail\TransactionalMailer;
 use App\User\Dto\RegisterRequest;
 use App\User\User;
 use App\User\UserOnboarding;
@@ -19,6 +20,7 @@ class RegisterController
         private EntityManagerInterface $em,
         private UserPasswordHasherInterface $passwordHasher,
         private UserOnboarding $onboarding,
+        private TransactionalMailer $mailer,
     ) {}
 
     #[Route('/api/register', name: 'api_register', methods: ['POST'])]
@@ -32,6 +34,9 @@ class RegisterController
         $this->em->persist($user);
         $this->onboarding->setupNewUser($user);
         $this->em->flush();
+
+        // Après le flush : le compte existe, un échec d'envoi ne l'annule pas.
+        $this->mailer->sendWelcome($user);
 
         return new JsonResponse(['id' => $user->getId(), 'username' => $user->getPseudo()], 201);
     }

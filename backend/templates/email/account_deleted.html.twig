@@ -1,0 +1,11 @@
+{% extends 'email/base.html.twig' %}
+
+{% block title %}Ton compte a été supprimé{% endblock %}
+{% block preheader %}Ton compte et tes données ont été effacés.{% endblock %}
+
+{% block content %}
+    <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#ffffff;">Au revoir {{ pseudo }},</h1>
+    <p style="margin:0 0 16px;">Ton compte Reelverse a bien été supprimé. Tes cartes, tes échanges, ta liste de souhaits et tes informations personnelles ont été effacés définitivement.</p>
+    <p style="margin:0 0 16px;">Cette action est irréversible. Tu pourras toujours créer un nouveau compte quand tu le souhaites.</p>
+    <p style="margin:0;font-size:14px;color:#a8a8c0;">Tu n'es pas à l'origine de cette suppression ? Écris-nous sans attendre à <a href="mailto:contact@reelverse.me" style="color:#f5b942;">contact@reelverse.me</a>.</p>
+{% endblock %}

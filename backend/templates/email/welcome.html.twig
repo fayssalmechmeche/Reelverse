@@ -1,0 +1,13 @@
+{% extends 'email/base.html.twig' %}
+
+{% block title %}Bienvenue sur Reelverse{% endblock %}
+{% block preheader %}Ton compte est prêt, ouvre ton premier pack.{% endblock %}
+
+{% block content %}
+    <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#ffffff;">Bienvenue, {{ pseudo }} !</h1>
+    <p style="margin:0 0 8px;">Ton compte Reelverse est prêt. Ouvre des packs, collectionne des cartes de films, séries, acteurs et personnages, et complète tes collections.</p>
+
+    {% include 'email/_button.html.twig' with {url: appUrl, label: 'Ouvrir mon premier pack'} only %}
+
+    <p style="margin:0;font-size:14px;color:#a8a8c0;">Une question ou un souci ? Réponds simplement à cet e-mail ou écris à <a href="mailto:contact@reelverse.me" style="color:#f5b942;">contact@reelverse.me</a>.</p>
+{% endblock %}

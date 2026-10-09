@@ -11,6 +11,7 @@ use App\LoginStreak\LoginStreak;
 use App\Marketplace\MarketplaceListing;
 use App\Pack\PackStock;
 use App\Quest\UserQuestClaim;
+use App\Shared\Mail\TransactionalMailer;
 use App\Shop\Shop;
 use App\Shop\ShopCard;
 use App\Social\Block;
@@ -34,6 +35,7 @@ class AccountDeletionService
 
     public function __construct(
         private EntityManagerInterface $em,
+        private TransactionalMailer $mailer,
         #[Autowire('%kernel.project_dir%')] string $projectDir,
     ) {
         $this->avatarDir = $projectDir . '/var/uploads/avatars';
@@ -43,6 +45,9 @@ class AccountDeletionService
     {
         $userId = (int) $user->getId();
         $avatar = $user->getAvatar();
+        // À garder avant la suppression : après, l'utilisateur n'existe plus.
+        $email = $user->getEmail();
+        $pseudo = $user->getPseudo();
 
         $this->em->wrapInTransaction(function () use ($userId): void {
             // Les échanges auxquels l'utilisateur participe disparaissent avec leurs cartes.
@@ -95,6 +100,10 @@ class AccountDeletionService
                 @unlink($path);
             }
         }
+
+        // Confirmation envoyée une fois la suppression validée. Elle ne contient
+        // aucune donnée du compte : l'adresse sert uniquement à l'envoi.
+        $this->mailer->sendAccountDeleted($email, $pseudo);
     }
 
     private function run(string $dql, int $userId): void
