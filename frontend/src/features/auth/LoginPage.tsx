@@ -4,6 +4,8 @@ import { Mail, KeyRound, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { AuthLayout } from "./AuthLayout";
 
+const SUSPENDED_MESSAGE = "Ce compte a été suspendu.";
+
 const OAUTH_ERRORS: Record<string, string> = {
   access_denied: "Connexion annulée.",
   email_missing: "Ce compte n'a pas d'adresse e-mail exploitable.",
@@ -12,6 +14,7 @@ const OAUTH_ERRORS: Record<string, string> = {
   invalid_state: "La connexion a expiré, réessayez.",
   provider_unavailable: "Cette connexion n'est pas disponible pour le moment.",
   conflict: "Un compte existe déjà avec ces informations, réessayez.",
+  account_banned: SUSPENDED_MESSAGE,
   oauth_failed: "La connexion a échoué, réessayez.",
 };
 
@@ -51,7 +54,12 @@ export function LoginPage() {
       }
 
       if (!res.ok) {
-        setError("Email ou mot de passe incorrect.");
+        const data = await res.json().catch(() => null);
+        setError(
+          data?.message === SUSPENDED_MESSAGE
+            ? SUSPENDED_MESSAGE
+            : "Email ou mot de passe incorrect.",
+        );
         return;
       }
 
