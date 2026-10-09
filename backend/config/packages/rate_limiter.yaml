@@ -1,0 +1,17 @@
+framework:
+  rate_limiter:
+    register:
+      policy: sliding_window
+      limit: 5
+      interval: "1 hour"
+      cache_pool: limiter.cache
+    forgot_password:
+      policy: sliding_window
+      limit: 5
+      interval: "1 hour"
+      cache_pool: limiter.cache
+    api_global:
+      policy: sliding_window
+      limit: 300
+      interval: "1 minute"
+      cache_pool: limiter.cache
