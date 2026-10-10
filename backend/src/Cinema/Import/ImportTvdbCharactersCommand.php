@@ -233,11 +233,13 @@ class ImportTvdbCharactersCommand extends Command
 
     private function isActorPhoto(string $image, string $personImage): bool
     {
-        if ($personImage !== '' && basename((string) parse_url($personImage, PHP_URL_PATH)) === basename((string) parse_url($image, PHP_URL_PATH))) {
-            return true;
+        // Une image de personnage a son propre fichier (ex: banners/actors/75476.jpg).
+        // On ne rejette que le repli sur la photo de l'acteur (même fichier que personImgURL).
+        if ($personImage === '') {
+            return false;
         }
 
-        return (bool) preg_match('#/(actors?|person|people)/#i', (string) parse_url($image, PHP_URL_PATH));
+        return basename((string) parse_url($personImage, PHP_URL_PATH)) === basename((string) parse_url($image, PHP_URL_PATH));
     }
 
     /**
