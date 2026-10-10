@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 
-// ---------------------------------------------------------------------------
-// À COMPLÉTER avant la mise en ligne : tout ce qui est entre [crochets] ci-dessous.
-// ---------------------------------------------------------------------------
 const SITE_NAME = "Reelverse";
 const EDITOR_PSEUDO = "Reelverse (pseudonyme de l’éditeur)";
 const CONTACT_EMAIL = "contact@reelverse.me";
@@ -11,7 +8,7 @@ const HOST_NAME = "Vercel Inc.";
 const HOST_ADDRESS = "340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis";
 const HOST_CONTACT = "https://vercel.com";
 const MIN_AGE = 16;
-const LAST_UPDATE = "7 octobre 2026";
+const LAST_UPDATE = "10 octobre 2026";
 
 const NAV_LINKS = [
   { to: "/legal", label: "Mentions légales" },
@@ -261,7 +258,8 @@ export function PrivacyPage() {
             <>
               <strong>Données techniques :</strong> adresse IP et journaux du
               serveur, conservés pour la sécurité et le fonctionnement du
-              service.
+              service. L’adresse IP sert aussi à limiter les tentatives de
+              connexion répétées et les abus.
             </>,
           ]}
         />
@@ -271,8 +269,8 @@ export function PrivacyPage() {
         <List
           items={[
             "Créer et gérer votre compte, faire fonctionner le jeu : exécution du contrat (conditions d’utilisation).",
-            "Envoyer l’e-mail de réinitialisation de mot de passe : exécution du contrat.",
-            "Sécuriser le service, détecter la fraude et les abus : intérêt légitime de l’éditeur.",
+            "Envoyer les e-mails liés à votre compte (bienvenue, réinitialisation du mot de passe, confirmation de suppression) : exécution du contrat.",
+            "Sécuriser le service, détecter la fraude et les abus, sauvegarder la base de données : intérêt légitime de l’éditeur.",
           ]}
         />
         <p>
@@ -302,8 +300,13 @@ export function PrivacyPage() {
           items={[
             <>L’hébergeur du site : {HOST_NAME}</>,
             <>
-              Cloudflare, qui assure le transit du trafic et la gestion du nom
-              de domaine.
+              Cloudflare, qui assure le transit du trafic, la gestion du nom de
+              domaine et le stockage des sauvegardes de la base de données.
+            </>,
+            <>
+              Resend, qui envoie les e-mails liés à votre compte (bienvenue,
+              réinitialisation du mot de passe, confirmation de suppression).
+              Votre adresse e-mail et le contenu du message lui sont transmis.
             </>,
             <>
               Google et Discord, uniquement si vous choisissez de vous connecter
@@ -328,8 +331,8 @@ export function PrivacyPage() {
 
       <Section title="Transferts hors de l’Union européenne">
         <p>
-          Vercel et Cloudflare sont des sociétés américaines : certaines données
-          techniques (par exemple votre adresse IP) peuvent être traitées aux
+          Vercel, Cloudflare et Resend sont des sociétés américaines : certaines
+          données techniques ou votre adresse e-mail peuvent être traitées aux
           États-Unis. Ces transferts s’appuient sur les garanties prévues par le
           RGPD, notamment les clauses contractuelles types de la Commission
           européenne ou le Data Privacy Framework, selon les cas.
@@ -339,9 +342,11 @@ export function PrivacyPage() {
       <Section title="Combien de temps ?">
         <p>
           Vos données de compte et de jeu sont conservées tant que votre compte
-          existe. Elles sont supprimées lorsque vous supprimez votre compte. Les
-          journaux techniques sont conservés pour une durée limitée, au plus 12
-          mois.
+          existe. Elles sont supprimées lorsque vous supprimez votre compte. Une
+          sauvegarde de la base est réalisée chaque nuit et conservée au plus 30
+          jours : les données d’un compte supprimé disparaissent donc aussi des
+          sauvegardes au plus tard 30 jours plus tard. Les journaux techniques
+          sont conservés pour une durée limitée, au plus 12 mois.
         </p>
       </Section>
 
