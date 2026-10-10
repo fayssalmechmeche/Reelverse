@@ -175,7 +175,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       {/* CONTENU */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-10 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-3 sm:pt-6 pb-10 space-y-6">
         {children}
       </main>
 
@@ -196,7 +196,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.path}
               to={item.path}
               className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-colors ${
-                isActive ? "text-[#E50914]" : "text-[#9CA3AF] hover:text-[#F3F4F6]"
+                isActive
+                  ? "text-[#E50914]"
+                  : "text-[#9CA3AF] hover:text-[#F3F4F6]"
               }`}
             >
               <div className="relative">

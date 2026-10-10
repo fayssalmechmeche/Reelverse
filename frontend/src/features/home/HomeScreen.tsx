@@ -117,18 +117,19 @@ export function HomeScreen() {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
+    if (card.type === "character") navigate(`/characters/${card.entityId}`);
   }
 
   return (
     <div className="space-y-6">
       {/* Scène centrale : pack */}
-      <section className="relative rounded-3xl bg-[#121217] border border-white/[0.08] p-6 sm:p-10 overflow-hidden shadow-2xl">
+      <section className="relative rounded-3xl bg-[#121217] border border-white/[0.08] p-4 sm:p-10 overflow-hidden shadow-2xl">
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="w-[320px] h-[320px] rounded-full bg-[#E50914]/10 blur-3xl" />
           <div className="w-[200px] h-[200px] rounded-full bg-[#F59E0B]/10 blur-2xl" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto space-y-5">
+        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto space-y-4 sm:space-y-5">
           <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1 rounded-full bg-[#181820] border border-white/10 text-[11px]">
             <span className="font-bold text-[#F59E0B] flex items-center gap-1">
               <Package className="w-3.5 h-3.5" />
@@ -151,10 +152,10 @@ export function HomeScreen() {
           </div>
 
           <div className="space-y-1">
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-[#F3F4F6]">
+            <h1 className="text-xl sm:text-4xl font-black tracking-tight text-[#F3F4F6]">
               Ouvrez vos Packs Cinéma
             </h1>
-            <p className="text-xs text-[#9CA3AF] max-w-md mx-auto">
+            <p className="hidden sm:block text-xs text-[#9CA3AF] max-w-md mx-auto">
               1 pack gratuit de 5 cartes toutes les 10 minutes. Chaque carte
               ouvre une collection de films, séries, acteurs et personnages.
             </p>
@@ -162,12 +163,12 @@ export function HomeScreen() {
 
           <div
             onClick={handleOpen}
-            className="group relative my-1 cursor-pointer select-none"
+            className="group relative mt-2 mb-7 sm:my-1 cursor-pointer select-none"
           >
-            <div className="absolute -left-6 top-5 w-40 h-56 rounded-2xl bg-[#181820] border border-white/10 -rotate-12 opacity-60 group-hover:-translate-x-2 transition-all duration-300" />
-            <div className="absolute -right-6 top-5 w-40 h-56 rounded-2xl bg-[#181820] border border-white/10 rotate-12 opacity-60 group-hover:translate-x-2 transition-all duration-300" />
+            <div className="absolute -left-5 top-4 sm:-left-6 sm:top-5 w-28 h-40 sm:w-40 sm:h-56 rounded-2xl bg-[#181820] border border-white/10 -rotate-12 opacity-60 group-hover:-translate-x-2 transition-all duration-300" />
+            <div className="absolute -right-5 top-4 sm:-right-6 sm:top-5 w-28 h-40 sm:w-40 sm:h-56 rounded-2xl bg-[#181820] border border-white/10 rotate-12 opacity-60 group-hover:translate-x-2 transition-all duration-300" />
 
-            <div className="relative w-56 sm:w-64 h-76 sm:h-80 p-5 rounded-2xl bg-gradient-to-b from-[#22222C] via-[#181820] to-[#121217] border-2 border-white/15 group-hover:border-[#F59E0B] shadow-[0_20px_50px_rgba(0,0,0,0.85)] group-hover:shadow-[0_0_45px_rgba(229,9,20,0.35)] group-hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-between overflow-hidden">
+            <div className="relative w-40 sm:w-64 h-52 sm:h-80 p-3 sm:p-5 rounded-2xl bg-gradient-to-b from-[#22222C] via-[#181820] to-[#121217] border-2 border-white/15 group-hover:border-[#F59E0B] shadow-[0_20px_50px_rgba(0,0,0,0.85)] group-hover:shadow-[0_0_45px_rgba(229,9,20,0.35)] group-hover:-translate-y-1.5 transition-all duration-300 flex flex-col items-center justify-between overflow-hidden">
               <div className="w-full flex items-center justify-between border-b border-white/10 pb-2">
                 <span className="text-[9px] font-black uppercase tracking-widest text-[#9CA3AF]">
                   REELVERSE
@@ -178,8 +179,8 @@ export function HomeScreen() {
               </div>
 
               <div className="my-auto flex flex-col items-center space-y-2.5">
-                <div className="w-20 h-20 rounded-2xl bg-[#121217] border border-[#F59E0B]/40 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
-                  <Film className="w-10 h-10 text-[#E50914]" />
+                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-[#121217] border border-[#F59E0B]/40 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300">
+                  <Film className="w-7 h-7 sm:w-10 sm:h-10 text-[#E50914]" />
                 </div>
                 <div className="text-center">
                   <div className="font-black text-base sm:text-lg tracking-tight text-[#F3F4F6]">
@@ -209,7 +210,7 @@ export function HomeScreen() {
             )}
           </div>
 
-          <div className="w-full max-w-xs space-y-1.5 mt-5">
+          <div className="hidden sm:block w-full max-w-xs space-y-1.5 mt-5">
             <div className="grid grid-cols-10 gap-1">
               {Array.from({ length: packStock?.maxStock ?? 10 }).map(
                 (_, idx) => {
@@ -233,7 +234,7 @@ export function HomeScreen() {
             type="button"
             onClick={handleOpen}
             disabled={!canOpen || openPack.isPending}
-            className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl border-b-4 font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl ${
+            className={`w-full sm:w-auto px-6 py-3 sm:py-3.5 rounded-2xl border-b-4 font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl ${
               canOpen
                 ? "bg-[#E50914] hover:bg-[#f6121d] border-red-950 text-white active:translate-y-0.5 cursor-pointer"
                 : "bg-[#181820] border-white/5 text-zinc-500 cursor-not-allowed"

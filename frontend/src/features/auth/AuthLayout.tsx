@@ -2,25 +2,25 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { LegalLinks, TmdbAttribution } from "../legal/LegalPages";
 
+// Images TMDB en hotlink (l'attribution TMDB est affichée plus bas).
+const TMDB_IMG = "https://image.tmdb.org/t/p/w500";
+
 const PREVIEW_CARDS = {
   left: {
-    name: "Cloud Atlas",
-    rarityLabel: "🎬 Epic",
-    image:
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+    name: "Rhaenyra Targaryen",
+    rarityLabel: "🎭 Epic",
+    image: `${TMDB_IMG}/9Zlmb7VmtVCxkLq5yqFFRRxCaED.jpg`,
   },
   center: {
-    name: "Tom Hanks",
+    name: "Tom Holland",
     categoryLabel: "👤 Acteur",
     rarityLabel: "LEGENDARY",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
+    image: `${TMDB_IMG}/adwEBb2sCSzqwnpVgNEG7irl1Ne.jpg`,
   },
   right: {
-    name: "Wolverine",
+    name: "Jon Snow",
     rarityLabel: "🎭 Legendary",
-    image:
-      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=800&q=80",
+    image: `${TMDB_IMG}/iGXlJbExWwZmo9sUDsYuzf4Sv4y.jpg`,
   },
 };
 
@@ -54,9 +54,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
               <span className="text-[#E50914]">nouvelle collection.</span>
             </h1>
             <p className="text-xs sm:text-sm text-[#9CA3AF] leading-relaxed max-w-md mx-auto lg:mx-0">
-              Ouvrez 1 pack gratuit toutes les 10 minutes, explorez les liens
-              entre acteurs, films, séries et personnages, et complétez vos
-              collections à 100 %.
+              Un pack gratuit toutes les 10 minutes. Tirez des acteurs, des
+              films, des séries et des personnages, puis complétez vos
+              collections.
             </p>
           </div>
 
@@ -66,9 +66,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                 <img
                   src={PREVIEW_CARDS.left.image}
                   alt={PREVIEW_CARDS.left.name}
-                  className="w-full h-28 sm:h-32 object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-top"
                 />
-                <div className="p-2 text-left">
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#181820] via-[#181820]/85 to-transparent text-left p-2 pt-8">
                   <span className="text-[9px] font-bold text-[#C4B5FD] uppercase">
                     {PREVIEW_CARDS.left.rarityLabel}
                   </span>
@@ -83,9 +83,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                 <img
                   src={PREVIEW_CARDS.right.image}
                   alt={PREVIEW_CARDS.right.name}
-                  className="w-full h-28 sm:h-32 object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-top"
                 />
-                <div className="p-2 text-left">
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#181820] via-[#181820]/85 to-transparent text-left p-2 pt-8">
                   <span className="text-[9px] font-bold text-[#FBBF24] uppercase">
                     {PREVIEW_CARDS.right.rarityLabel}
                   </span>
@@ -97,15 +97,15 @@ export function AuthLayout({ children }: { children: ReactNode }) {
               </div>
 
               <div className="relative z-10 w-32 sm:w-36 h-48 sm:h-52 rounded-xl bg-[#181820] border-2 border-[#F59E0B]/70 overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.9)]">
-                <div className="bg-[#E50914] text-white text-[8px] font-black uppercase tracking-widest py-0.5 text-center">
+                <div className="absolute top-0 inset-x-0 z-10 bg-[#E50914] text-white text-[8px] font-black uppercase tracking-widest py-0.5 text-center">
                   Nouvelle Carte
                 </div>
                 <img
                   src={PREVIEW_CARDS.center.image}
                   alt={PREVIEW_CARDS.center.name}
-                  className="w-full h-28 sm:h-32 object-cover"
+                  className="absolute inset-0 h-full w-full object-cover object-top"
                 />
-                <div className="p-2.5 bg-[#181820] text-left">
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#181820] via-[#181820]/85 to-transparent text-left p-2.5 pt-8">
                   <div className="flex items-center justify-between text-[9px]">
                     <span className="text-[#9CA3AF]">
                       {PREVIEW_CARDS.center.categoryLabel}
@@ -132,7 +132,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
                 1 Pack / 10 min
               </div>
               <div className="text-[11px] text-[#9CA3AF] mt-0.5">
-                Stock max 10 packs (50 cartes), 100 % gratuit.
+                Jusqu’à 10 packs en réserve, soit 50 cartes. Toujours gratuit.
               </div>
             </div>
             <div className="p-3 rounded-xl bg-[#121217] border border-white/[0.06]">
@@ -145,10 +145,11 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="p-3 rounded-xl bg-[#121217] border border-white/[0.06]">
               <div className="text-xs font-black text-[#E50914]">
-                Pseudo Unique
+                Quêtes et succès
               </div>
               <div className="text-[11px] text-[#9CA3AF] mt-0.5">
-                Indépendant de votre connexion Google ou Discord.
+                Relevez des défis chaque jour et complétez vos collections pour
+                gagner des Coins.
               </div>
             </div>
           </div>
