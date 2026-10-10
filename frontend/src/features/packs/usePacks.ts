@@ -5,6 +5,7 @@ export interface PackStockData {
   storedPacks: number;
   maxStock: number;
   secondsToNextPack: number;
+  dropRates?: Record<RarityKey, number>;
 }
 
 export function usePackStock() {

@@ -10,6 +10,8 @@ use App\User\User;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Achievement\AchievementChecker;
+use App\Notification\NotificationService;
+use App\Notification\NotificationType;
 
 class TradingService
 {
@@ -23,6 +25,7 @@ class TradingService
         private InventoryManager $inventory,
         private FriendshipService $friendshipService,
         private AchievementChecker $achievementChecker,
+        private NotificationService $notifications,
     ) {}
 
     /**
@@ -85,6 +88,14 @@ class TradingService
         }
 
         $this->em->persist($trade);
+
+        $this->notifications->notify(
+            $recipient,
+            NotificationType::TRADE_RECEIVED,
+            sprintf('%s te propose un échange.', $proposer->getPseudo()),
+            '/profile?tab=social',
+        );
+
         $this->em->flush();
 
         return $trade;
@@ -176,6 +187,14 @@ class TradingService
             }
 
             $trade->setStatus(TradeStatus::ACCEPTED);
+
+            $this->notifications->notify(
+                $trade->getProposer(),
+                NotificationType::TRADE_ACCEPTED,
+                sprintf('%s a accepté ton échange.', $trade->getRecipient()->getPseudo()),
+                '/profile?tab=social',
+            );
+
             $this->em->flush();
 
             return $trade;

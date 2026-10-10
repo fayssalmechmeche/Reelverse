@@ -9,7 +9,7 @@ import { useShop } from "../shop/useShop";
 import { useFriendsData } from "../social/useFriends";
 import { useResolvedCards, type CardRef } from "../cards/useResolvedCard";
 import { PackRevealModal, type RevealCard } from "../packs/PackRevealModal";
-import type { RarityKey } from "../../design/rarity";
+import { RARITY_CONFIG, type RarityKey } from "../../design/rarity";
 
 const TYPE_META: Record<DrawnCard["type"], { emoji: string; label: string }> = {
   person: { emoji: "👤", label: "Acteur" },
@@ -358,6 +358,41 @@ export function HomeScreen() {
                 onClick={() => goToDetail(card)}
                 compact={true}
               />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {packStock?.dropRates && (
+        <section className="rounded-2xl bg-[#121217] border border-white/[0.08] p-4 space-y-3">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
+            Chances de tirage par carte
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+            {(Object.keys(RARITY_ORDER) as RarityKey[]).map((rarity) => (
+              <div
+                key={rarity}
+                className="rounded-xl bg-[#181820] border border-white/5 p-2.5 space-y-1.5"
+              >
+                <div
+                  className="text-[11px] font-black uppercase"
+                  style={{ color: RARITY_CONFIG[rarity].accentHex }}
+                >
+                  {RARITY_CONFIG[rarity].label}
+                </div>
+                <div className="text-lg font-black text-[#F3F4F6] leading-none">
+                  {packStock.dropRates?.[rarity] ?? 0} %
+                </div>
+                <div className="h-1 rounded-full bg-[#0B0B0E] overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${packStock.dropRates?.[rarity] ?? 0}%`,
+                      backgroundColor: RARITY_CONFIG[rarity].accentHex,
+                    }}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </section>

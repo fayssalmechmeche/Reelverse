@@ -19,6 +19,12 @@ class PackDrawConfig
     public const MAX_PACKS_STOCK = 10;
     public const PACK_INTERVAL_MINUTES = 10;
 
+    /** @return array<string, int> Probabilités par rareté, en pourcentage */
+    public static function rates(): array
+    {
+        return self::WEIGHTS;
+    }
+
     public function drawRarity(): Rarity
     {
         $roll = mt_rand(1, 100);

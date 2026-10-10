@@ -10,6 +10,8 @@ use App\User\User;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Achievement\AchievementChecker;
+use App\Notification\NotificationService;
+use App\Notification\NotificationType;
 
 class MarketplaceService
 {
@@ -22,6 +24,7 @@ class MarketplaceService
         private InventoryManager $inventory,
         private AchievementChecker $achievementChecker,
         private WalletService $wallet,
+        private NotificationService $notifications,
     ) {}
 
     public function createListing(User $seller, int $cardId, int $price): MarketplaceListing
@@ -134,6 +137,13 @@ class MarketplaceService
             $listing->markAsSold();
             $this->inventory->addCard($buyer, $listing->getCard(), 1);
             $this->achievementChecker->onCardsObtained($buyer, [$listing->getCard()]);
+
+            $this->notifications->notify(
+                $seller,
+                NotificationType::CARD_SOLD,
+                sprintf('%s a acheté ta carte %s : +%d Coins.', $buyer->getPseudo(), $listing->getCard()->getRarity()->value, $sellerEarning),
+                '/marketplace',
+            );
 
             $this->em->flush();
 

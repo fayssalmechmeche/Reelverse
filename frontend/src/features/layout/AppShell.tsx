@@ -17,6 +17,7 @@ import { useFriendsData } from "../social/useFriends";
 import { DailyRewardPopup } from "../loginStreak/DailyRewardPopup";
 import { useClaimableRewards } from "../quests/useClaimableRewards";
 import { LegalLinks, TmdbAttribution } from "../legal/LegalPages";
+import { NotificationBell } from "../notifications/NotificationBell";
 
 function formatSecondsMMSS(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -165,6 +166,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </span>
               )}
             </button>
+
+            <NotificationBell />
 
             <button
               onClick={logout}

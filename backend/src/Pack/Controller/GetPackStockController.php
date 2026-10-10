@@ -54,6 +54,7 @@ class GetPackStockController
             'storedPacks' => $storedPacks,
             'maxStock' => $maxStock,
             'secondsToNextPack' => $secondsToNextPack,
+            'dropRates' => PackDrawConfig::rates(),
         ]);
     }
 }

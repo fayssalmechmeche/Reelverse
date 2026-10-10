@@ -2,12 +2,17 @@
 
 namespace App\Social;
 
+use App\Notification\NotificationService;
+use App\Notification\NotificationType;
 use App\User\User;
 use Doctrine\ORM\EntityManagerInterface;
 
 class FriendshipService
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(
+        private EntityManagerInterface $em,
+        private NotificationService $notifications,
+    ) {}
 
     public function sendRequest(User $requester, User $addressee): Friendship
     {
@@ -29,6 +34,14 @@ class FriendshipService
         $friendship->setAddressee($addressee);
 
         $this->em->persist($friendship);
+
+        $this->notifications->notify(
+            $addressee,
+            NotificationType::FRIEND_REQUEST,
+            sprintf('%s t\'a envoyé une demande d\'ami.', $requester->getPseudo()),
+            '/profile?tab=social',
+        );
+
         $this->em->flush();
 
         return $friendship;

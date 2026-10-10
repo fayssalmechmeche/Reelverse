@@ -20,6 +20,10 @@ class PackStock
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $lastComputedAt;
 
+    // Posé quand la notification "stock plein" a été envoyée, remis à null dès qu'un pack est ouvert.
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $fullNotifiedAt = null;
+
     #[ORM\OneToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false, unique: true)]
     private User $user;
@@ -75,6 +79,9 @@ class PackStock
     {
         $this->storedPacks = max(0, min(PackDrawConfig::MAX_PACKS_STOCK, $storedPacks));
         $this->lastComputedAt = new \DateTimeImmutable();
+        if ($this->storedPacks < PackDrawConfig::MAX_PACKS_STOCK) {
+            $this->fullNotifiedAt = null;
+        }
         return $this;
     }
 
@@ -84,6 +91,7 @@ class PackStock
             throw new \DomainException('Aucun pack disponible.');
         }
         $this->storedPacks--;
+        $this->fullNotifiedAt = null;
         return $this;
     }
 
