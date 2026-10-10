@@ -19,6 +19,7 @@ class JwtCookieListener
         $event->getResponse()->headers->setCookie(
             Cookie::create('BEARER')
                 ->withValue($token)
+                ->withExpires(time() + 604800) // aligné sur token_ttl (7 jours)
                 ->withHttpOnly(true)
                 ->withSecure($this->secureCookie)
                 ->withSameSite(Cookie::SAMESITE_LAX)

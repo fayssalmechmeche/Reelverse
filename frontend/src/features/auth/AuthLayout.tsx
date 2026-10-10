@@ -35,9 +35,12 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <div className="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
           <div className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#E50914] flex items-center justify-center font-black text-white text-xl tracking-tighter shadow-[0_8px_25px_rgba(229,9,20,0.45)]">
-              R
-            </div>
+            <img
+              src="/favicon.svg"
+              alt=""
+              className="h-12 w-auto shrink-0 drop-shadow-[0_8px_25px_rgba(229,9,20,0.45)]"
+              draggable={false}
+            />
             <div className="text-left">
               <span className="font-black text-xl tracking-tight text-[#F3F4F6]">
                 REEL<span className="text-[#E50914]">VERSE</span>
@@ -54,9 +57,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
               <span className="text-[#E50914]">nouvelle collection.</span>
             </h1>
             <p className="text-xs sm:text-sm text-[#9CA3AF] leading-relaxed max-w-md mx-auto lg:mx-0">
-              Un pack gratuit toutes les 10 minutes. Tirez des acteurs, des
-              films, des séries et des personnages, puis complétez vos
-              collections.
+              Ouvrez 1 pack gratuit toutes les 10 minutes, explorez les liens
+              entre acteurs, films, séries et personnages, et complétez vos
+              collections à 100 %.
             </p>
           </div>
 

@@ -70,9 +70,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2 text-left group">
-              <div className="w-8 h-8 rounded-lg bg-[#E50914] flex items-center justify-center font-black text-white text-lg tracking-tighter shadow-sm">
-                R
-              </div>
+              <img
+                src="/favicon.svg"
+                alt=""
+                className="h-9 w-auto shrink-0"
+                draggable={false}
+              />
               <span className="font-black text-base tracking-tight text-[#F3F4F6] hidden sm:inline">
                 REEL<span className="text-[#E50914]">VERSE</span>
               </span>
