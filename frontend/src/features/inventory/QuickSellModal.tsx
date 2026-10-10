@@ -12,9 +12,11 @@ export interface QuickSellTarget {
 export function QuickSellModal({
   target,
   onClose,
+  onSold,
 }: {
   target: QuickSellTarget;
   onClose: () => void;
+  onSold?: () => void;
 }) {
   const sellCard = useSellCard();
   const [sellAmount, setSellAmount] = useState(1);
@@ -25,14 +27,14 @@ export function QuickSellModal({
     sellCard.mutate(
       { id: target.id, quantity: sellAmount },
       {
-        onSuccess: () => onClose(),
+        onSuccess: () => (onSold ?? onClose)(),
         onError: (err: Error) => setActionError(err.message),
       },
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl bg-[#121217] border border-white/15 p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div>

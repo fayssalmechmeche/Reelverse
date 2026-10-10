@@ -1,7 +1,23 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { X, Coins, ExternalLink, Tag, Volume2, VolumeX } from "lucide-react";
 import { CinemaCard } from "../../components/CinemaCard";
 import type { RarityKey } from "../../design/rarity";
+import { useInventory } from "../inventory/useInventory";
+import { QuickSellModal } from "../inventory/QuickSellModal";
+import { QuickListModal } from "../marketplace/QuickListModal";
+import { RARITY_CONFIG } from "../../design/rarity";
+import { isMuted, playReveal, setMuted } from "./packSounds";
+import { LegendaryFx } from "./LegendaryFx";
+
+// Miroir de QuickSellPricing.php, uniquement pour l'affichage (le serveur fait foi).
+const SELL_PRICE: Record<RarityKey, number> = {
+  common: 20,
+  uncommon: 50,
+  rare: 120,
+  epic: 300,
+  legendary: 800,
+};
 
 export interface RevealCard {
   id: number;
@@ -19,7 +35,8 @@ export interface RevealCard {
 interface PackRevealModalProps {
   cards: RevealCard[];
   onClose: () => void;
-  onSelectCard: (card: RevealCard) => void;
+  /** Optionnel : ouvre la fiche. Proposé seulement au récapitulatif, car il quitte l'ouverture. */
+  onSelectCard?: (card: RevealCard) => void;
 }
 
 type Stage = "revealed" | "summary";
@@ -32,6 +49,29 @@ export function PackRevealModal({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [stage, setStage] = useState<Stage>("revealed");
   const [animKey, setAnimKey] = useState(0);
+  const [actionCard, setActionCard] = useState<RevealCard | null>(null);
+  const [sellTarget, setSellTarget] = useState<RevealCard | null>(null);
+  const [listTarget, setListTarget] = useState<RevealCard | null>(null);
+  // Cartes vendues ou mises sur le marché pendant cette ouverture.
+  const [doneIds, setDoneIds] = useState<Record<number, "sold" | "listed">>({});
+  const { data: inventory = [] } = useInventory();
+  const [muted, setMutedState] = useState(isMuted());
+
+  // Son à chaque nouvelle carte révélée (le clic qui a ouvert le pack
+  // sert de geste utilisateur pour débloquer l'audio).
+  useEffect(() => {
+    if (stage === "revealed") playReveal(cards[currentIndex].rarity);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, stage]);
+
+  function toggleMute() {
+    setMuted(!muted);
+    setMutedState(!muted);
+  }
+
+  // RevealCard.id est l'id de la Card ; la vente attend l'id du UserCard.
+  const userCardOf = (card: RevealCard) =>
+    inventory.find((u) => u.cardId === card.id);
 
   function handleAdvance() {
     if (currentIndex < cards.length - 1) {
@@ -48,6 +88,136 @@ export function PackRevealModal({
     }
     setStage("summary");
   }
+
+  const overlays = (
+    <>
+      {actionCard && !sellTarget && !listTarget && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/75 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setActionCard(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-[#121217] border border-white/15 p-4 space-y-4 max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex gap-3">
+              <div className="w-24 aspect-[2/3] rounded-lg overflow-hidden bg-[#0B0B0E] shrink-0">
+                {actionCard.imageUrl && (
+                  <img
+                    src={actionCard.imageUrl}
+                    alt={actionCard.name}
+                    className="w-full h-full object-cover object-top"
+                  />
+                )}
+              </div>
+              <div className="min-w-0 flex flex-col justify-center gap-1">
+                <span
+                  style={RARITY_CONFIG[actionCard.rarity].badgeStyle}
+                  className="self-start rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                >
+                  {RARITY_CONFIG[actionCard.rarity].label}
+                </span>
+                <h3 className="text-lg font-black text-[#F3F4F6] leading-tight">
+                  {actionCard.name}
+                </h3>
+                <p className="text-xs text-[#9CA3AF]">
+                  {actionCard.typeEmoji} {actionCard.typeLabel}
+                  {actionCard.subtitle ? ` • ${actionCard.subtitle}` : ""}
+                </p>
+                {userCardOf(actionCard) && (
+                  <p className="text-[11px] text-[#9CA3AF]">
+                    Tu en possèdes ×{userCardOf(actionCard)!.quantity}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {doneIds[actionCard.id] ? (
+              <p className="text-xs text-[#9CA3AF]">
+                {doneIds[actionCard.id] === "sold"
+                  ? "Carte vendue."
+                  : "Carte mise en vente sur le marché."}
+              </p>
+            ) : userCardOf(actionCard) ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setSellTarget(actionCard)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-xs font-black uppercase tracking-wider text-[#F59E0B] hover:bg-[#F59E0B]/25"
+                >
+                  <Coins className="w-3.5 h-3.5" />
+                  Vente rapide (+{SELL_PRICE[actionCard.rarity]} coins)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setListTarget(actionCard)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#181820] border border-white/15 text-xs font-black uppercase tracking-wider text-[#F3F4F6] hover:border-white/30"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  Mettre sur le marché
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-[#9CA3AF]">Chargement...</p>
+            )}
+
+            {stage === "summary" &&
+              onSelectCard &&
+              actionCard.type !== "character" && (
+                <button
+                  type="button"
+                  onClick={() => onSelectCard(actionCard)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#9CA3AF] hover:text-white"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Voir la fiche (quitte l'ouverture)
+                </button>
+              )}
+
+            <button
+              type="button"
+              onClick={() => setActionCard(null)}
+              className="w-full px-4 py-2.5 rounded-xl bg-[#181820] text-xs font-bold text-[#9CA3AF] hover:text-white"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {sellTarget && userCardOf(sellTarget) && (
+        <QuickSellModal
+          target={{
+            id: userCardOf(sellTarget)!.id,
+            name: sellTarget.name,
+            quantity: userCardOf(sellTarget)!.quantity,
+          }}
+          onClose={() => setSellTarget(null)}
+          onSold={() => {
+            setDoneIds((p) => ({ ...p, [sellTarget.id]: "sold" }));
+            setSellTarget(null);
+          }}
+        />
+      )}
+
+      {listTarget && userCardOf(listTarget) && (
+        <QuickListModal
+          target={{
+            cardId: listTarget.id,
+            name: listTarget.name,
+            imageUrl: listTarget.imageUrl,
+            rarityLabel: RARITY_CONFIG[listTarget.rarity].label,
+            quantity: userCardOf(listTarget)!.quantity,
+          }}
+          onClose={() => setListTarget(null)}
+          onListed={() => {
+            setDoneIds((p) => ({ ...p, [listTarget.id]: "listed" }));
+            setListTarget(null);
+          }}
+        />
+      )}
+    </>
+  );
 
   if (stage === "summary") {
     return (
@@ -83,7 +253,7 @@ export function PackRevealModal({
                 quantity={1}
                 isNew={c.isNew}
                 compact={true}
-                onClick={() => onSelectCard(c)}
+                onClick={() => setActionCard(c)}
               />
             ))}
           </div>
@@ -98,6 +268,7 @@ export function PackRevealModal({
             </button>
           </div>
         </div>
+        {createPortal(overlays, document.body)}
       </div>
     );
   }
@@ -113,11 +284,24 @@ export function PackRevealModal({
         onClick={handleAdvance}
         className="relative w-full max-w-sm flex flex-col items-center justify-center space-y-6 cursor-pointer"
       >
-        {isLegendary && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="w-80 h-80 rounded-full bg-[#F59E0B]/25 blur-3xl animate-pulse" />
-          </div>
-        )}
+        {isLegendary && <LegendaryFx />}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMute();
+          }}
+          aria-label={muted ? "Activer le son" : "Couper le son"}
+          title={muted ? "Activer le son" : "Couper le son"}
+          className="absolute -top-2 right-0 z-20 p-2 rounded-xl bg-[#181820] border border-white/10 text-[#9CA3AF] hover:text-white"
+        >
+          {muted ? (
+            <VolumeX className="w-4 h-4" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
+        </button>
 
         <div className="flex items-center gap-1.5 z-10">
           {cards.map((_, idx) => (
@@ -135,25 +319,44 @@ export function PackRevealModal({
         </div>
 
         <div
-          className={`w-full max-w-[290px] rounded-2xl transition-all duration-500 ${
-            isLegendary
-              ? "ring-2 ring-[#F59E0B] shadow-[0_0_55px_rgba(245,158,11,0.45)] scale-[1.02]"
-              : isEpic
-                ? "ring-1 ring-[#A78BFA] shadow-[0_0_35px_rgba(167,139,250,0.3)]"
-                : ""
-          }`}
+          className={`relative z-10 w-full max-w-[290px] ${isLegendary ? "rv-shake" : ""}`}
         >
-          <CinemaCard
-            name={currentCard.name}
-            subtitle={currentCard.subtitle}
-            imageUrl={currentCard.imageUrl}
-            typeEmoji={currentCard.typeEmoji}
-            typeLabel={currentCard.typeLabel}
-            rarity={currentCard.rarity}
-            quantity={1}
-            isNew={currentCard.isNew}
-          />
+          <div
+            className={`w-full rounded-2xl ${
+              isLegendary
+                ? "rv-pop ring-2 ring-[#F59E0B] shadow-[0_0_55px_rgba(245,158,11,0.45)]"
+                : isEpic
+                  ? "rv-pop ring-1 ring-[#A78BFA] shadow-[0_0_35px_rgba(167,139,250,0.3)]"
+                  : ""
+            }`}
+          >
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setActionCard(currentCard);
+              }}
+            >
+              <CinemaCard
+                name={currentCard.name}
+                subtitle={currentCard.subtitle}
+                imageUrl={currentCard.imageUrl}
+                typeEmoji={currentCard.typeEmoji}
+                typeLabel={currentCard.typeLabel}
+                rarity={currentCard.rarity}
+                quantity={1}
+                isNew={currentCard.isNew}
+              />
+            </div>
+          </div>
         </div>
+
+        <p className="text-[11px] text-[#9CA3AF] -mt-3 z-10">
+          {doneIds[currentCard.id] === "sold"
+            ? "Vendue"
+            : doneIds[currentCard.id] === "listed"
+              ? "Mise en vente sur le marché"
+              : "Touche la carte pour la vendre ou la mettre sur le marché"}
+        </p>
 
         <button
           type="button"
@@ -174,6 +377,8 @@ export function PackRevealModal({
               : "Voir le récapitulatif"}
         </button>
       </div>
+
+      {createPortal(overlays, document.body)}
     </div>
   );
 }
