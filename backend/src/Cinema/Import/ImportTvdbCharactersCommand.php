@@ -141,7 +141,10 @@ class ImportTvdbCharactersCommand extends Command
         }
 
         $data = $this->tvdb->get(($kind === 'movie' ? 'movies' : 'series') . "/$tvdbId/extended");
-        $tvdbCharacters = $this->extractCharacters($data['data']['characters'] ?? []);
+        [$tvdbCharacters, $actorPhotos] = $this->extractCharacters($data['data']['characters'] ?? []);
+        if ($dryRun || $output->isVerbose()) {
+            $output->writeln(sprintf('  [%s] %d images de personnage, %d photos d\'acteur ignorées', $title instanceof Movie ? $title->getTitle() : $title->getName(), count($tvdbCharacters), $actorPhotos));
+        }
         if ($tvdbCharacters === []) {
             return 0;
         }
@@ -191,13 +194,16 @@ class ImportTvdbCharactersCommand extends Command
     }
 
     /**
-     * Ne garde que les personnages TVDB qui ont une image.
+     * Ne garde que les personnages TVDB qui ont une vraie image de personnage.
+     * TVDB renvoie souvent la photo de l'acteur à la place : on l'écarte, car on
+     * a déjà la photo TMDB et elle n'apporterait rien.
      *
-     * @return list<array{name: string, person: string, image: string}>
+     * @return array{0: list<array{name: string, person: string, image: string}>, 1: int} [personnages, nombre de photos d'acteur ignorées]
      */
     private function extractCharacters(array $raw): array
     {
         $result = [];
+        $actorPhotos = 0;
         foreach ($raw as $c) {
             $image = (string) ($c['image'] ?? '');
             $name = trim((string) ($c['name'] ?? ''));
@@ -210,6 +216,10 @@ class ImportTvdbCharactersCommand extends Command
             if (mb_strlen($image) > 500) {
                 continue;
             }
+            if ($this->isActorPhoto($image, (string) ($c['personImgURL'] ?? ''))) {
+                $actorPhotos++;
+                continue;
+            }
 
             $result[] = [
                 'name' => $this->normalize($name),
@@ -218,7 +228,16 @@ class ImportTvdbCharactersCommand extends Command
             ];
         }
 
-        return $result;
+        return [$result, $actorPhotos];
+    }
+
+    private function isActorPhoto(string $image, string $personImage): bool
+    {
+        if ($personImage !== '' && basename((string) parse_url($personImage, PHP_URL_PATH)) === basename((string) parse_url($image, PHP_URL_PATH))) {
+            return true;
+        }
+
+        return (bool) preg_match('#/(actors?|person|people)/#i', (string) parse_url($image, PHP_URL_PATH));
     }
 
     /**
