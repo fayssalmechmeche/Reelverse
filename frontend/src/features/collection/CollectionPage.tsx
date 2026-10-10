@@ -143,6 +143,22 @@ export function CollectionPage({
           </div>
         </div>
 
+        {entity.links && entity.links.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1 border-t border-white/[0.06] mt-1">
+            {entity.links.map((link) => (
+              <button
+                key={link.path}
+                type="button"
+                onClick={() => navigate(link.path)}
+                className="px-3 py-1.5 rounded-xl bg-[#181820] border border-white/10 hover:border-white/30 text-xs font-bold text-[#F3F4F6] flex items-center gap-1.5"
+              >
+                <span>{link.emoji}</span>
+                <span>{link.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {entity.description && (
           <div className="space-y-1 pt-1 border-t border-white/[0.06] mt-1">
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#9CA3AF] pt-3">
@@ -226,7 +242,9 @@ export function CollectionPage({
             <span className="text-xs font-bold text-[#9CA3AF]">
               {entity.type === "person"
                 ? "Films & Séries"
-                : "Acteurs & Personnages"}
+                : entity.type === "character"
+                  ? "Autres personnages du casting"
+                  : "Acteurs & Personnages"}
             </span>
             <span className="text-xs font-bold text-[#9CA3AF]">
               {ownedCount} / {totalCount} ({pct}%)
@@ -272,6 +290,9 @@ export function CollectionPage({
             id: entity.userCardId,
             name: entity.name,
             quantity: entity.quantity,
+            imageUrl: entity.imageUrl,
+            rarity: entity.rarity,
+            typeLabel: entity.typeLabel,
           }}
           onClose={() => setSellModalOpen(false)}
         />

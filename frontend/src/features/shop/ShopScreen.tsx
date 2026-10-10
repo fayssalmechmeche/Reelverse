@@ -62,6 +62,7 @@ export function ShopScreen() {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
+    if (card.type === "character") navigate(`/characters/${card.entityId}`);
   }
 
   if (isLoading) return <p className="text-[#9CA3AF]">Chargement du shop...</p>;

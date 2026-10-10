@@ -9,6 +9,7 @@ import { HomeScreen } from "./features/home/HomeScreen";
 import { MovieDetail } from "./features/movies/MovieDetail";
 import { SeriesDetail } from "./features/series/SeriesDetail";
 import { PersonDetail } from "./features/people/PersonDetail";
+import { CharacterDetail } from "./features/characters/CharacterDetail";
 import { ShopScreen } from "./features/shop/ShopScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { CollectionScreen } from "./features/collection/CollectionScreen";
@@ -63,6 +64,14 @@ function App() {
             element={
               <AppShell>
                 <PersonDetail />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/characters/:id"
+            element={
+              <AppShell>
+                <CharacterDetail />
               </AppShell>
             }
           />

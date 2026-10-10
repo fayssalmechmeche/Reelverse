@@ -141,6 +141,12 @@ export function TmdbAttribution({ className = "" }: { className?: string }) {
         affiches et photos proviennent de TMDB et appartiennent à leurs ayants
         droit.
       </p>
+      <p className="text-[11px] text-[#9CA3AF] leading-relaxed mt-1.5">
+        Certaines images de personnages sont fournies par{" "}
+        <ExternalLink href="https://thetvdb.com">TheTVDB</ExternalLink> (pensez
+        à compléter ses informations ou à vous y abonner). Elles appartiennent à
+        leurs ayants droit.
+      </p>
     </div>
   );
 }
@@ -320,6 +326,12 @@ export function PrivacyPage() {
               serveurs. Votre navigateur lui transmet donc, comme à tout site,
               votre adresse IP lors du chargement des images.
             </>,
+            <>
+              <ExternalLink href="https://thetvdb.com">TheTVDB</ExternalLink> :
+              même principe pour certaines images de personnages, chargées
+              depuis ses serveurs. Aucune donnée de votre compte ne lui est
+              transmise.
+            </>,
           ]}
         />
         <p>
@@ -443,10 +455,11 @@ export function TermsPage() {
 
       <Section title="6. Contenus tiers et propriété intellectuelle">
         <p>
-          Les données, affiches et photos sont fournies par TMDB et
-          appartiennent à leurs ayants droit. {SITE_NAME} n’est affilié à aucun
-          studio ni diffuseur. Le code, le design et le nom {SITE_NAME} restent
-          la propriété de l’éditeur.
+          Les données, affiches et photos sont fournies par TMDB (et, pour
+          certaines images de personnages, par TheTVDB) et appartiennent à leurs
+          ayants droit. {SITE_NAME} n’est affilié à aucun studio ni diffuseur.
+          Le code, le design et le nom {SITE_NAME} restent la propriété de
+          l’éditeur.
         </p>
         <TmdbAttribution />
         <p>

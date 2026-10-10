@@ -9,9 +9,8 @@ export function MovieDetail() {
   const { data, isLoading, error } = useMovieCollection(Number(id));
 
   function handleItemClick(item: CollectionItem) {
-    // Un personnage renvoie vers l'acteur qui l'incarne (le graphe du jeu)
-    if (item.type === "character" && item.actorId) {
-      navigate(`/people/${item.actorId}`);
+    if (item.type === "character") {
+      navigate(`/characters/${item.entityId}`);
     }
   }
 

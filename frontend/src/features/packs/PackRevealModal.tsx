@@ -5,19 +5,11 @@ import { CinemaCard } from "../../components/CinemaCard";
 import type { RarityKey } from "../../design/rarity";
 import { useInventory } from "../inventory/useInventory";
 import { QuickSellModal } from "../inventory/QuickSellModal";
+import { QUICK_SELL_PRICE } from "../inventory/sellPricing";
 import { QuickListModal } from "../marketplace/QuickListModal";
 import { RARITY_CONFIG } from "../../design/rarity";
 import { isMuted, playReveal, setMuted } from "./packSounds";
 import { LegendaryFx } from "./LegendaryFx";
-
-// Miroir de QuickSellPricing.php, uniquement pour l'affichage (le serveur fait foi).
-const SELL_PRICE: Record<RarityKey, number> = {
-  common: 20,
-  uncommon: 50,
-  rare: 120,
-  epic: 300,
-  legendary: 800,
-};
 
 export interface RevealCard {
   id: number;
@@ -146,7 +138,7 @@ export function PackRevealModal({
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-xs font-black uppercase tracking-wider text-[#F59E0B] hover:bg-[#F59E0B]/25"
                 >
                   <Coins className="w-3.5 h-3.5" />
-                  Vente rapide (+{SELL_PRICE[actionCard.rarity]} coins)
+                  Vente rapide (+{QUICK_SELL_PRICE[actionCard.rarity]} coins)
                 </button>
                 <button
                   type="button"
@@ -161,18 +153,16 @@ export function PackRevealModal({
               <p className="text-xs text-[#9CA3AF]">Chargement...</p>
             )}
 
-            {stage === "summary" &&
-              onSelectCard &&
-              actionCard.type !== "character" && (
-                <button
-                  type="button"
-                  onClick={() => onSelectCard(actionCard)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#9CA3AF] hover:text-white"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Voir la fiche (quitte l'ouverture)
-                </button>
-              )}
+            {stage === "summary" && onSelectCard && (
+              <button
+                type="button"
+                onClick={() => onSelectCard(actionCard)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#9CA3AF] hover:text-white"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Voir la fiche (quitte l'ouverture)
+              </button>
+            )}
 
             <button
               type="button"
@@ -191,6 +181,9 @@ export function PackRevealModal({
             id: userCardOf(sellTarget)!.id,
             name: sellTarget.name,
             quantity: userCardOf(sellTarget)!.quantity,
+            imageUrl: sellTarget.imageUrl,
+            rarity: sellTarget.rarity,
+            typeLabel: sellTarget.typeLabel,
           }}
           onClose={() => setSellTarget(null)}
           onSold={() => {

@@ -74,6 +74,7 @@ services:
       MAILER_FROM: ${MAILER_FROM:-no-reply@reelverse.me}
       MESSENGER_TRANSPORT_DSN: doctrine://default?auto_setup=0
       TMDB_READ_TOKEN: ${TMDB_READ_TOKEN:-}
+      TVDB_API_KEY: ${TVDB_API_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}

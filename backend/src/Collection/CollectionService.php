@@ -151,6 +151,67 @@ class CollectionService
         );
     }
 
+    /**
+     * Fiche d'un personnage : la carte du personnage en en-tête (avec ses actions),
+     * des liens vers l'acteur et l'œuvre, et les autres personnages de la même œuvre.
+     */
+    public function getCharacterCollection(User $user, Character $character): array
+    {
+        $actor = $character->getActor();
+        $movie = $character->getMovie();
+        $series = $character->getSeries();
+
+        $links = [];
+        $titleName = null;
+        if ($actor) {
+            $links[] = [
+                'emoji' => '👤',
+                'label' => 'Joué par ' . $actor->getName(),
+                'path' => '/people/' . $actor->getId(),
+            ];
+        }
+        if ($movie) {
+            $titleName = $movie->getTitle();
+            $links[] = ['emoji' => '🎬', 'label' => $movie->getTitle(), 'path' => '/movies/' . $movie->getId()];
+        } elseif ($series) {
+            $titleName = $series->getName();
+            $links[] = ['emoji' => '📺', 'label' => $series->getName(), 'path' => '/series/' . $series->getId()];
+        }
+
+        $siblings = [];
+        if ($movie || $series) {
+            $siblings = $this->em->createQueryBuilder()
+                ->select('c', 'a')
+                ->from(Character::class, 'c')
+                ->leftJoin('c.actor', 'a')
+                ->where($movie ? 'c.movie = :title' : 'c.series = :title')
+                ->andWhere('c.id != :self')
+                ->setParameter('title', $movie ?? $series)
+                ->setParameter('self', $character->getId())
+                ->getQuery()
+                ->getResult();
+        }
+
+        return $this->buildCollectionResponse(
+            $user,
+            array_merge(
+                [
+                    'type' => 'character',
+                    'id' => $character->getId(),
+                    'name' => $character->getName(),
+                    'imageUrl' => $character->getImageUrl() ?: $this->image($actor?->getProfilePath()),
+                    'typeEmoji' => '🎭',
+                    'typeLabel' => 'Personnage',
+                    'subtitle' => 'Personnage' . ($titleName ? ' • ' . $titleName : ''),
+                    'description' => null,
+                    'links' => $links,
+                ],
+                $this->resolveSelfCard($user, CardType::CHARACTER, $character->getId()),
+            ),
+            $this->charactersToItems($siblings),
+        );
+    }
+
     /** @param Character[] $characters */
     private function charactersToItems(array $characters): array
     {
@@ -161,7 +222,7 @@ class CollectionService
                 'type' => CardType::CHARACTER,
                 'entityId' => $character->getId(),
                 'name' => $character->getName(),
-                'imageUrl' => $this->image($actor?->getProfilePath()),
+                'imageUrl' => $character->getImageUrl() ?: $this->image($actor?->getProfilePath()),
                 'typeEmoji' => '🎭',
                 'typeLabel' => 'Personnage',
                 // Permet au front de naviguer Personnage -> Acteur (le graphe du jeu)

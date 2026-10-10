@@ -43,6 +43,10 @@ class Movie
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $overview = null;
 
+    /** Date du dernier passage de l'import TheTVDB (même sans résultat), pour le rendre reprenable. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $tvdbSyncedAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -115,6 +119,16 @@ class Movie
     public function setOverview(?string $overview): static
     {
         $this->overview = $overview;
+        return $this;
+    }
+
+    public function getTvdbSyncedAt(): ?\DateTimeImmutable
+    {
+        return $this->tvdbSyncedAt;
+    }
+    public function setTvdbSyncedAt(?\DateTimeImmutable $tvdbSyncedAt): static
+    {
+        $this->tvdbSyncedAt = $tvdbSyncedAt;
         return $this;
     }
 }

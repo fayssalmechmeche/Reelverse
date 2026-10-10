@@ -1,0 +1,5 @@
+framework:
+  http_client:
+    scoped_clients:
+      tvdb.client:
+        base_uri: "https://api4.thetvdb.com/v4/"

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { RarityKey } from "../../design/rarity";
 
-export type CollectionEntityType = "person" | "movie" | "series";
+export type CollectionEntityType = "person" | "movie" | "series" | "character";
 export type CollectionItemType = "movie" | "series" | "character";
 
 export interface CollectionEntity {
@@ -13,6 +13,8 @@ export interface CollectionEntity {
   typeLabel: string;
   subtitle: string;
   description: string | null;
+  /** Liens de navigation (ex: fiche personnage vers son acteur et son œuvre). */
+  links?: { emoji: string; label: string; path: string }[];
   cardId: number | null;
   userCardId: number | null;
   rarity: RarityKey | null;
@@ -57,6 +59,13 @@ export function useMovieCollection(id: number) {
   return useQuery({
     queryKey: ["collection", "movie", id],
     queryFn: () => fetchCollection(`/api/movies/${id}/collection`),
+  });
+}
+
+export function useCharacterCollection(id: number) {
+  return useQuery({
+    queryKey: ["collection", "character", id],
+    queryFn: () => fetchCollection(`/api/characters/${id}/collection`),
   });
 }
 

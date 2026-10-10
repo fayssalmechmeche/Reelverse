@@ -158,14 +158,15 @@ class ResolveCardsController
         if (!$character) {
             return null;
         }
-        // Les personnages n'ont pas leur propre image TMDB : on affiche la photo de l'acteur
+        // Image du personnage (TheTVDB) si on en a une, sinon la photo de l'acteur
         $actor = $character->getActor();
         $work = $character->getMovie()?->getTitle() ?? $character->getSeries()?->getName();
 
         return [
             'name' => $character->getName(),
             'subtitle' => $work ?? $meta['label'],
-            'imageUrl' => $actor->getProfilePath() ? self::TMDB_IMAGE_BASE . $actor->getProfilePath() : null,
+            'imageUrl' => $character->getImageUrl()
+                ?: ($actor->getProfilePath() ? self::TMDB_IMAGE_BASE . $actor->getProfilePath() : null),
             'typeEmoji' => $meta['emoji'],
             'typeLabel' => $meta['label'],
         ];

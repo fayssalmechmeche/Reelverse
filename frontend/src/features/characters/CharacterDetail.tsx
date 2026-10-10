@@ -1,17 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useSeriesCollection } from "../collection/useCollection";
+import { useCharacterCollection } from "../collection/useCollection";
 import { CollectionPage } from "../collection/CollectionPage";
 import type { CollectionItem } from "../collection/useCollection";
 
-export function SeriesDetail() {
+export function CharacterDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data, isLoading, error } = useSeriesCollection(Number(id));
+  const { data, isLoading, error } = useCharacterCollection(Number(id));
 
   function handleItemClick(item: CollectionItem) {
-    if (item.type === "character") {
-      navigate(`/characters/${item.entityId}`);
-    }
+    if (item.type === "character") navigate(`/characters/${item.entityId}`);
   }
 
   return (

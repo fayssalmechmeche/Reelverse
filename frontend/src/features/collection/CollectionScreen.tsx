@@ -244,6 +244,7 @@ export function CollectionScreen() {
     if (card.type === "movie") navigate(`/movies/${card.entityId}`);
     if (card.type === "series") navigate(`/series/${card.entityId}`);
     if (card.type === "person") navigate(`/people/${card.entityId}`);
+    if (card.type === "character") navigate(`/characters/${card.entityId}`);
   }
 
   function toggleWishlist(cardId: number) {
@@ -477,6 +478,9 @@ export function CollectionScreen() {
             id: sellTarget.id,
             name: sellTarget.name,
             quantity: sellTarget.quantity,
+            imageUrl: sellTarget.imageUrl,
+            rarity: sellTarget.rarity,
+            typeLabel: sellTarget.typeLabel,
           }}
           onClose={() => setSellTarget(null)}
         />

@@ -43,6 +43,10 @@ class Character
     #[ORM\JoinColumn(nullable: true)]
     private ?Series $series = null;
 
+    /** Image du personnage (TheTVDB, hotlink). Vide : on affiche la photo de l'acteur. */
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $imageUrl = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -75,6 +79,16 @@ class Character
     public function setMovie(?Movie $movie): static
     {
         $this->movie = $movie;
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+    public function setImageUrl(?string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
         return $this;
     }
 
